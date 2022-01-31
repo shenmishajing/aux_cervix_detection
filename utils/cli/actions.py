@@ -36,6 +36,23 @@ def deep_update(source, override):
             for index, v in change_item:
                 source[index] = deep_update(source[index], v)
 
+        if 'insert_item' in override:
+            insert_item = override.pop('insert_item')
+            insert_item.sort(key = lambda x: x[0], reverse = True)
+            for item in insert_item:
+                if len(item) == 3:
+                    index, value, extend = item
+                else:
+                    index, value = item
+                    extend = False
+                if extend:
+                    assert isinstance(value, list), 'Cannot extend a non-list'
+                    value.reverse()
+                    for v in value:
+                        source.insert(index, v)
+                else:
+                    source.insert(index, value)
+
         if '__delete__' in override:
             delete_keys = override.pop('__delete__')
             if isinstance(delete_keys, int):
