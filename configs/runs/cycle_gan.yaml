@@ -1,6 +1,6 @@
 __base__:
     - ../default_runtime.yaml
-    - ../datasets/DualCervix/DualCervix_color.yaml
+    - ../datasets/DualCervix/DualCervixRegistration/DualCervixRegistration_color.yaml
     - ../models/GAN/CycleGAN.yaml
 
 trainer:

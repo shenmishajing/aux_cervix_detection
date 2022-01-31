@@ -4,7 +4,7 @@ import numpy as np
 
 import torch
 
-from typing import Optional, Mapping, Any
+from typing import Optional, Mapping, Any, Sequence
 
 from .coco import CocoDataset
 from .api_wrappers import COCO
@@ -19,6 +19,7 @@ class DualCervixDataSet(CocoDataset):
     def __init__(self,
                  ann_file,
                  pipeline,
+                 part = None,
                  classes = None,
                  data_root = None,
                  img_prefix = '',
@@ -27,6 +28,7 @@ class DualCervixDataSet(CocoDataset):
                  test_mode = False,
                  filter_empty_gt = True):
         self.ann_file = ann_file
+        self.part = part
         self.data_root = data_root
         self.img_prefix = img_prefix
         self.seg_prefix = seg_prefix
@@ -176,11 +178,12 @@ class DualCervixDataSet(CocoDataset):
             if img_info['width'] / img_info['height'] > 1:
                 self.flag[i] = 1
 
-    def prepare_train_img(self, idx):
-        """Get training data and annotations after pipeline.
+    def prepare_img(self, idx, training = True):
+        """Get data and optional annotations after pipeline.
 
         Args:
             idx (int): Index of data.
+            training (bool): Get training data or test data. Default: True.
 
         Returns:
             dict: Training data and annotation after pipeline with new keys \
@@ -191,13 +194,30 @@ class DualCervixDataSet(CocoDataset):
         for part in self.Modals:
             np.random.set_state(random_state)
             img_info = self.data_infos[part][idx]
-            ann_info = self.get_ann_info(idx, part)
-            results = dict(img_info = img_info, ann_info = ann_info)
+            if training:
+                ann_info = self.get_ann_info(idx, part)
+                results = dict(img_info = img_info, ann_info = ann_info)
+            else:
+                results = dict(img_info = img_info)
             if self.proposals is not None:
                 results['proposals'] = self.proposals[idx]
             self.pre_pipeline(results)
             res[part] = self.pipeline[part](results)
+            if self.part is not None and part == self.part:
+                res.update(results)
         return res
+
+    def prepare_train_img(self, idx):
+        """Get training data and annotations after pipeline.
+
+        Args:
+            idx (int): Index of data.
+
+        Returns:
+            dict: Training data and annotation after pipeline with new keys \
+                introduced by pipeline.
+        """
+        return self.prepare_img(idx, training = True)
 
     def prepare_test_img(self, idx):
         """Get testing data  after pipeline.
@@ -209,23 +229,14 @@ class DualCervixDataSet(CocoDataset):
             dict: Testing data after pipeline with new keys introduced by \
                 pipeline.
         """
-        res = {}
-        random_state = np.random.get_state()
-        for part in self.Modals:
-            np.random.set_state(random_state)
-            img_info = self.data_infos[part][idx]
-            results = dict(img_info = img_info)
-            if self.proposals is not None:
-                results['proposals'] = self.proposals[idx]
-            self.pre_pipeline(results)
-            res[part] = self.pipeline[part](results)
-        return res
+        return self.prepare_img(idx, training = False)
 
 
 class DualCervixDataModule(LightningDataModule):
     def __init__(self,
                  ann_path: str,
-                 pipeline: Mapping[str, Any],
+                 pipeline: Sequence[Mapping[str, Any]],
+                 part: str = None,
                  data_root: Optional[str] = '.',
                  img_prefix: Optional[str] = '',
                  seg_prefix: Optional[str] = '',
@@ -233,6 +244,7 @@ class DualCervixDataModule(LightningDataModule):
         super().__init__(data_loader_config)
         self.ann_path = ann_path
         self.pipeline = pipeline
+        self.part = part
         self.data_root = data_root
         self.img_prefix = img_prefix
         self.seg_prefix = seg_prefix
@@ -240,6 +252,7 @@ class DualCervixDataModule(LightningDataModule):
     def _build_data_set(self, split):
         return DualCervixDataSet(ann_file = os.path.join(self.ann_path, split + '_{part}.json'),
                                  pipeline = self.pipeline,
+                                 part = self.part,
                                  data_root = self.data_root,
                                  img_prefix = self.img_prefix,
                                  seg_prefix = self.seg_prefix)
