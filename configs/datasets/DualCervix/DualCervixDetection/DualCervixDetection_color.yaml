@@ -56,7 +56,7 @@ __import__:
         to_rgb: true
 
 data:
-    class_path: datasets.DualCervix.DualCervixDataModule
+    class_path: datasets.dual_cervix.DualCervixDataModule
     init_args:
         pipeline:
             acid:

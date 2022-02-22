@@ -1,8 +1,9 @@
 import os
+
 import torch
 from tqdm import trange
 
-from datasets.DualCervix import DualCervixDataSet
+from datasets.dual_cervix import DualCervixDataSet
 
 
 def add_item(sum_dict, part, item, index):
