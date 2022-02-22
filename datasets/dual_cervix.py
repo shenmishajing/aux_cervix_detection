@@ -29,7 +29,7 @@ class DualCervixDataModule(LightningDataModule):
         self.seg_prefix = seg_prefix
 
     def _build_data_set(self, split):
-        return DualCervixDataSet(ann_file = os.path.join(self.ann_path, split + '_{part}.json'),
+        return DualCervixDataSet(ann_file = os.path.join(self.ann_path, split + '_{modal}.json'),
                                  pipeline = self.pipeline,
                                  modal = self.modal,
                                  data_root = self.data_root,
