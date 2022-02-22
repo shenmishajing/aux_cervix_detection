@@ -1,35 +1,94 @@
+import os
+from typing import Any, Callable, Optional, Type, Union
+
+from jsonargparse.jsonnet import ActionJsonnet
+from jsonargparse.loaders_dumpers import get_loader_exceptions, load_value
+from jsonargparse.namespace import Namespace
+from jsonargparse.optionals import get_config_read_mode, import_jsonnet
+from jsonargparse.util import Path, change_to_path_dir
 from pytorch_lightning import Trainer
-from pytorch_lightning.utilities import _JSONARGPARSE_AVAILABLE
-from pytorch_lightning.utilities.cli import LightningCLI, LightningArgumentParser, SaveConfigCallback, DATAMODULE_REGISTRY
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, Callable
+from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY, LightningArgumentParser, LightningCLI, SaveConfigCallback
 
 from utils.callbacks.save_and_log_config_callback import SaveAndLogConfigCallback
 from .trainer import Trainer as _Trainer
-from .actions import LightningActionConfigFile
+from .yaml import parse_str
 
 DATAMODULE_REGISTRY(object)
 
 
 class ArgumentParser(LightningArgumentParser):
-    def __init__(self, *args: Any, parse_as_dict: bool = True, **kwargs: Any) -> None:
-        """Initialize argument parser that supports configuration file input.
+    def _load_config_parser_mode(
+            self,
+            cfg_str: str,
+            cfg_path: str = '',
+            ext_vars: Optional[dict] = None,
+    ) -> Namespace:
+        """Loads a configuration string (yaml or jsonnet) into a namespace.
 
-        For full details of accepted arguments see `ArgumentParser.__init__
-        <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
+        Args:
+            cfg_str: The configuration content.
+            cfg_path: Optional path to original config path, just for error printing.
+            ext_vars: Optional external variables used for parsing jsonnet.
+
+        Raises:
+            TypeError: If there is an invalid value according to the parser.
         """
-        if not _JSONARGPARSE_AVAILABLE:
-            raise ModuleNotFoundError(
-                "`jsonargparse` is not installed but it is required for the CLI."
-                " Install it with `pip install jsonargparse[signatures]`."
-            )
-        super(LightningArgumentParser, self).__init__(*args, parse_as_dict = parse_as_dict, **kwargs)
-        self.add_argument(
-            "--config", action = LightningActionConfigFile, help = "Path to a configuration file in json or yaml format."
-        )
-        self.callback_keys: List[str] = []
-        # separate optimizers and lr schedulers to know which were added
-        self._optimizers: Dict[str, Tuple[Union[Type, Tuple[Type, ...]], str]] = {}
-        self._lr_schedulers: Dict[str, Tuple[Union[Type, Tuple[Type, ...]], str]] = {}
+        if self.parser_mode == 'jsonnet':
+            ext_vars, ext_codes = ActionJsonnet.split_ext_vars(ext_vars)
+            _jsonnet = import_jsonnet('_load_config_parser_mode')
+            cfg_str = _jsonnet.evaluate_snippet(cfg_path, cfg_str, ext_vars = ext_vars, ext_codes = ext_codes)
+        try:
+            if self.parser_mode == 'jsonnet':
+                cfg_dict = load_value(cfg_str)
+            else:
+                cfg_dict = parse_str(cfg_str, cfg_path = cfg_path)
+        except get_loader_exceptions() as ex:
+            raise TypeError(f'Problems parsing config :: {ex}') from ex
+
+        cfg = self._apply_actions(cfg_dict)
+
+        return cfg
+
+    def parse_path(
+            self,
+            cfg_path: str,
+            ext_vars: Optional[dict] = None,
+            env: Optional[bool] = None,
+            defaults: bool = True,
+            with_meta: Optional[bool] = None,
+            _skip_check: bool = False,
+            _fail_no_subcommand: bool = True,
+    ) -> Namespace:
+        """Parses a configuration file (yaml or jsonnet) given its path.
+
+        Args:
+            cfg_path: Path to the configuration file to parse.
+            ext_vars: Optional external variables used for parsing jsonnet.
+            env: Whether to merge with the parsed environment, None to use parser's default.
+            defaults: Whether to merge with the parser's defaults.
+            with_meta: Whether to include metadata in config object, None to use parser's default.
+
+        Returns:
+            A config object with all parsed values.
+
+        Raises:
+            ParserError: If there is a parsing error and error_handler=None.
+        """
+        fpath = Path(cfg_path, mode = get_config_read_mode())
+        with change_to_path_dir(fpath):
+            cfg_str = fpath.get_content()
+            parsed_cfg = self.parse_string(cfg_str,
+                                           os.path.basename(cfg_path),
+                                           ext_vars,
+                                           env,
+                                           defaults,
+                                           with_meta = with_meta,
+                                           _skip_check = _skip_check,
+                                           _fail_no_subcommand = _fail_no_subcommand)
+
+        self._logger.info(f'Parsed {self.parser_mode} from path: {cfg_path}')
+
+        return parsed_cfg
 
 
 class CLI(LightningCLI):

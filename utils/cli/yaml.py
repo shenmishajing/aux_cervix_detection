@@ -1,10 +1,10 @@
-import os
 import copy
-from typing import Dict, List, Optional
+import os
+from typing import Dict, List
+
+from jsonargparse import Path, get_config_read_mode
+from jsonargparse.loaders_dumpers import load_value
 from jsonargparse.util import change_to_path_dir
-from jsonargparse import ActionConfigFile, get_config_read_mode, Path
-from jsonargparse.actions import _ActionSubCommands
-from jsonargparse.loaders_dumpers import load_value, get_loader_exceptions
 
 
 def deep_update(source, override):
@@ -31,6 +31,10 @@ def deep_update(source, override):
                 source[key] = override[key]
         return source
     elif isinstance(source, List) and isinstance(override, Dict):
+        if '__delete__' in override and override['__delete__'] is True:
+            override.pop('__delete__')
+            return override
+
         if 'change_item' in override:
             change_item = override.pop('change_item')
             for index, v in change_item:
@@ -53,6 +57,16 @@ def deep_update(source, override):
                 else:
                     source.insert(index, value)
 
+                if '__delete__' in override:
+                    if isinstance(override['__delete__'], int):
+                        override['__delete__'] = [override['__delete__']]
+                    for i in range(len(override['__delete__'])):
+                        if override['__delete__'][i] >= index:
+                            if extend:
+                                override['__delete__'][i] += len(value)
+                            else:
+                                override['__delete__'][i] += 1
+
         if '__delete__' in override:
             delete_keys = override.pop('__delete__')
             if isinstance(delete_keys, int):
@@ -73,16 +87,11 @@ def deep_update(source, override):
     return override
 
 
-def get_cfg_from_str(cfg_str, **kwargs):
-    cfg = load_value(cfg_str)
-    return cfg
-
-
-def get_cfg_from_path(cfg_path, **kwargs):
+def get_cfg_from_path(cfg_path):
     fpath = Path(cfg_path, mode = get_config_read_mode())
     with change_to_path_dir(fpath):
         cfg_str = fpath.get_content()
-        parsed_cfg = get_cfg_from_str(cfg_str, **kwargs)
+        parsed_cfg = load_value(cfg_str)
     return parsed_cfg
 
 
@@ -98,7 +107,7 @@ def parse_config(cfg_file, cfg_path = None, **kwargs):
                     sub_cfg_path[0]) else sub_cfg_path[0], sub_cfg_path[1]] for sub_cfg_path in sub_cfg_paths]
             sub_cfg_file = {}
             for sub_cfg_path in sub_cfg_paths:
-                cur_cfg_file = _parse_path(sub_cfg_path[0], **kwargs)
+                cur_cfg_file = parse_path(sub_cfg_path[0], **kwargs)
                 for key in sub_cfg_path[1].split('.'):
                     if key:
                         cur_cfg_file = cur_cfg_file[key]
@@ -113,7 +122,7 @@ def parse_config(cfg_file, cfg_path = None, **kwargs):
     return cfg_file
 
 
-def _parse_path(cfg_path, seen_cfg = None, **kwargs):
+def parse_path(cfg_path, seen_cfg = None, **kwargs):
     abs_cfg_path = os.path.abspath(cfg_path)
     if seen_cfg is None:
         seen_cfg = {}
@@ -123,43 +132,26 @@ def _parse_path(cfg_path, seen_cfg = None, **kwargs):
         else:
             return copy.deepcopy(seen_cfg[abs_cfg_path])
 
-    cfg_file = get_cfg_from_path(cfg_path, **kwargs)
+    cfg_file = get_cfg_from_path(cfg_path)
     seen_cfg[abs_cfg_path] = None
     cfg_file = parse_config(cfg_file, cfg_path = cfg_path, seen_cfg = seen_cfg, **kwargs)
     seen_cfg[abs_cfg_path] = cfg_file
     return cfg_file
 
 
-def parse_path(parser, cfg_path, **kwargs):
-    return parser._apply_actions(_parse_path(cfg_path, parser = parser, **kwargs))
-
-
-def _parse_string(cfg_string, **kwargs):
-    return parse_config(get_cfg_from_str(cfg_string, **kwargs), **kwargs)
-
-
-def parse_string(parser, cfg_string, **kwargs):
-    return parser._apply_actions(_parse_string(cfg_string, parser = parser, **kwargs))
-
-
-class LightningActionConfigFile(ActionConfigFile):
-    @staticmethod
-    def apply_config(parser, cfg, dest, value) -> None:
-        with _ActionSubCommands.not_single_subcommand():
-            if dest not in cfg:
-                cfg[dest] = []
-            kwargs = {'env': False, 'defaults': False, '_skip_check': True, '_fail_no_subcommand': False}
-            try:
-                cfg_path: Optional[Path] = Path(value, mode = get_config_read_mode())
-            except TypeError as ex_path:
-                try:
-                    if isinstance(load_value(value), str):
-                        raise ex_path
-                    cfg_path = None
-                    cfg_file = parse_string(parser, value, **kwargs)
-                except (TypeError,) + get_loader_exceptions() as ex_str:
-                    raise TypeError(f'Parser key "{dest}": {ex_str}') from ex_str
+def parse_str(cfg_str, cfg_path = None, seen_cfg = None, **kwargs):
+    if seen_cfg is None:
+        seen_cfg = {}
+    cfg_file = load_value(cfg_str)
+    if cfg_path is not None:
+        abs_cfg_path = os.path.abspath(cfg_path)
+        if abs_cfg_path in seen_cfg:
+            if seen_cfg[abs_cfg_path] is None:
+                raise RuntimeError('Circular reference detected in config file')
             else:
-                cfg_file = parse_path(parser, value, **kwargs)
-            cfg[dest].append(cfg_path)
-            cfg.update(cfg_file)
+                return copy.deepcopy(seen_cfg[abs_cfg_path])
+        seen_cfg[abs_cfg_path] = None
+    cfg_file = parse_config(cfg_file, cfg_path = cfg_path, seen_cfg = seen_cfg, **kwargs)
+    if cfg_path is not None:
+        seen_cfg[abs_cfg_path] = cfg_file
+    return cfg_file
