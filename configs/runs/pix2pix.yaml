@@ -4,9 +4,6 @@ __base__:
     - ../models/GAN/pix2pix.yaml
 
 trainer:
-    logger:
-        init_args:
-            name: pix2pix_UnetGenerator_NLayerDiscriminator_color
     # debug
     limit_train_batches: 1.0
     limit_val_batches: 1.0

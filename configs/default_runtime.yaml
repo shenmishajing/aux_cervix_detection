@@ -2,8 +2,7 @@ trainer:
     logger:
         class_path: utils.loggers.wandb.WandbNamedLogger
         init_args:
-            name: default_run_name
-            project: dual_cervix_registration
+            project: default_project_name
             offline: false
     callbacks:
         -   class_path: utils.progress.rich_progress.RichDefaultThemeProgressBar

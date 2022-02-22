@@ -2,8 +2,9 @@ import os
 from typing import Optional
 
 from pytorch_lightning import LightningModule, Trainer
-from pytorch_lightning.utilities.cloud_io import get_filesystem
+from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.utilities.cli import SaveConfigCallback
+from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from ..utils import get_log_dir
 
@@ -15,6 +16,11 @@ class SaveAndLogConfigCallback(SaveConfigCallback):
         # save the config in `setup` because (1) we want it to save regardless of the trainer function run
         # and we want to save before processes are spawned
         if trainer.logger is not None:
+            if isinstance(trainer.logger, WandbLogger) and trainer.logger._name is None and trainer.logger._experiment is None:
+                name = os.path.splitext(os.path.split(self.config['config'][0].abs_path)[1])[0]
+                trainer.logger._name = name
+                trainer.logger._wandb_init['name'] = name
+
             if 'subcommand' in self.config:
                 trainer.logger.log_hyperparams(self.config[self.config['subcommand']])
 
