@@ -32,3 +32,23 @@ class RichDefaultThemeProgressBar(RichProgressBar):
             required_padding = len(self.validation_description) - len(train_description)
             train_description += " " * required_padding
         return train_description
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        super(RichProgressBar, self).on_train_epoch_start(trainer, pl_module)
+
+        train_description = self._get_train_description(trainer.current_epoch)
+        if self.main_progress_bar_id is not None and self._leave:
+            self._stop_progress()
+            self._init_progress(trainer)
+        if self.main_progress_bar_id is None:
+            self.main_progress_bar_id = self._add_task(self.total_train_batches, train_description)
+        elif self.progress is not None:
+            self.progress.reset(self.main_progress_bar_id, total = self.total_train_batches,
+                                description = train_description, visible = True)
+
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+        super(RichProgressBar, self).on_validation_batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
+        if trainer.sanity_checking:
+            self._update(self.val_sanity_progress_bar_id)
+        elif self.val_progress_bar_id is not None:
+            self._update(self.val_progress_bar_id)
