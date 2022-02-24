@@ -27,7 +27,7 @@ class MMDetDataSetAdapter(_LightningDataModule):
                  split_format_to = 'ann_file',
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.split_format_to = split_format_to
+        self.split_format_to = split_format_to if split_format_to is None or isinstance(split_format_to, list) else [split_format_to]
         self.dataset_init_kwargs = {
             'type': type,
             'ann_file': ann_file,
@@ -93,8 +93,9 @@ class MMDetDataSetAdapter(_LightningDataModule):
 
     def _build_data_set(self, split):
         cfg = copy.deepcopy(self.dataset_init_kwargs)
-        if self.split_format_to is None or self.split_format_to not in cfg:
+        if self.split_format_to is None:
             cfg['split'] = split
         else:
-            cfg[self.split_format_to] = string.Template(cfg[self.split_format_to]).safe_substitute(split = split)
+            for s in self.split_format_to:
+                cfg[s] = string.Template(cfg[s]).safe_substitute(split = split)
         return build_dataset(cfg)
