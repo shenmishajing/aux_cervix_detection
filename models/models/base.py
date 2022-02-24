@@ -1,20 +1,22 @@
 import copy
-from typing import Any, Sequence, Mapping, Optional, Union
+from abc import ABC
+from typing import Any, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning import LightningModule as _LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from utils import optim, initialize
+
+from utils import initialize, optim
 
 
-class LightningModule(_LightningModule):
+class LightningModule(_LightningModule, ABC):
 
     def __init__(self,
-                 initialize_config: Union[Mapping[str, Any], Sequence[Mapping[str, Any]]] = None,
-                 normalize_config: Mapping[str, Any] = None,
+                 initialize_config = None,
+                 normalize_config = None,
                  loss_config: Mapping[str, Union[torch.nn.Module, Mapping[str, Union[torch.nn.Module, int, float]]]] = None,
-                 optimizer_config: Optional[Mapping[str, Any]] = None,
+                 optimizer_config = None,
                  *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.initialize_config = initialize_config

@@ -1,8 +1,8 @@
 import numpy as np
 
-from .api_wrappers import COCO
-from .coco import CocoDataset
-from .pipelines import Compose
+from mmdet.datasets.api_wrappers import COCO
+from mmdet.datasets.coco import CocoDataset
+from mmdet.datasets.pipelines import Compose
 
 
 class MultiModalsDataSet(CocoDataset):

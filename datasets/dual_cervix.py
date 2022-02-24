@@ -1,7 +1,5 @@
 import os
 
-import torch
-
 from .base import LightningDataModule
 from .multi_modals import MultiModalsDataSet
 
@@ -35,18 +33,3 @@ class DualCervixDataModule(LightningDataModule):
                                  data_root = self.data_root,
                                  img_prefix = self.img_prefix,
                                  seg_prefix = self.seg_prefix)
-
-    @staticmethod
-    def collate_fn(batch):
-        res = {}
-        for part in batch[0]:
-            res[part] = {}
-            stack_keys = ['img', 'gt_segments_from_bboxes']
-            for key in [k for k in stack_keys if k in batch[0][part]]:
-                if isinstance(batch[0][part][key], torch.Tensor):
-                    res[part][key] = torch.stack([x[part][key] for x in batch])
-                else:
-                    res[part][key] = [x[part][key] for x in batch]
-            for key in [k for k in batch[0][part] if k not in stack_keys]:
-                res[part][key] = [x[part][key] for x in batch]
-        return res
