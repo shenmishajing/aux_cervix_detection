@@ -8,3 +8,6 @@ class TwoStageDetector(_TwoStageDetector):
         args = [ConfigDict(a) for a in args]
         kwargs = {k: ConfigDict(v) for k, v in kwargs.items()}
         super().__init__(*args, **kwargs)
+
+    def simple_test(self, img, img_metas, proposals = None, rescale = False, **kwargs):
+        return super(TwoStageDetector, self).simple_test(img, img_metas, proposals, rescale)
