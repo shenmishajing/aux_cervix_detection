@@ -4,7 +4,6 @@ __base__:
     - ../../models/faster_rcnn/faster_rcnn_r50_fpn.yaml
     - ../../schedules/schedule_1x.yaml
 
-
 trainer:
     # debug
     limit_train_batches: 1.0
