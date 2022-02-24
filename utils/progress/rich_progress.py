@@ -1,4 +1,4 @@
-from typing import Dict, Union, Optional
+from typing import Dict, Optional, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBar, RichProgressBarTheme
@@ -21,3 +21,12 @@ class RichDefaultThemeProgressBar(RichProgressBar):
             # don't show the version number
             items.pop("v_num", None)
         return items
+
+    def _get_train_description(self, current_epoch: int) -> str:
+        train_description = f"Epoch {current_epoch}"
+        if len(self.validation_description) > len(train_description):
+            # Padding is required to avoid flickering due of uneven lengths of "Epoch X"
+            # and "Validation" Bar description
+            required_padding = len(self.validation_description) - len(train_description)
+            train_description += " " * required_padding
+        return train_description
