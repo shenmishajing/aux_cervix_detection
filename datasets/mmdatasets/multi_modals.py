@@ -153,14 +153,16 @@ class MultiModalsDataSet(CocoDataset):
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-        if self.modal is None:
+        if self.modal is not None:
+            res = self.prepare_img_on_modal(idx, self.modal, training)
+        else:
             res = {}
             random_state = np.random.get_state()
             for modal in self.Modals:
                 np.random.set_state(random_state)
                 res[modal] = self.prepare_img_on_modal(idx, modal, training)
-        else:
-            res = self.prepare_img_on_modal(idx, self.modal, training)
+                if modal == self.Modal:
+                    res.update(res[modal])
         return res
 
     def prepare_train_img(self, idx):

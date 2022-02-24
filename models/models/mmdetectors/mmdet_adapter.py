@@ -80,7 +80,6 @@ class MMDetModelAdapter(LightningModule, ABC):
         return self.model(*args, **kwargs)
 
     def forward_step(self, batch):
-        batch = batch['acid']
         self.batch_size = batch['img'].shape[0]
         with torch.no_grad():
             outputs = self.model.train_step(data = batch, optimizer = None)
@@ -91,7 +90,6 @@ class MMDetModelAdapter(LightningModule, ABC):
         return outputs
 
     def training_step(self, batch, batch_idx):
-        batch = batch['acid']
         self.batch_size = batch['img'].shape[0]
         outputs = self.model.train_step(data = batch, optimizer = None)
         self.log_dict(self.add_prefix(outputs['log_vars']))
