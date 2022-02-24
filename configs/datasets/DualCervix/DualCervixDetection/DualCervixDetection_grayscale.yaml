@@ -1,4 +1,4 @@
-__base__: DualCervix_color.yaml
+__base__: DualCervixDetection_color.yaml
 
 __import__:
     import_load_img_transform: &import_load_img_transform

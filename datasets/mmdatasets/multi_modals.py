@@ -1,10 +1,14 @@
-import numpy as np
+import string
 
+import numpy as np
+from mmdet.datasets import CocoDataset, DATASETS
 from mmdet.datasets.api_wrappers import COCO
-from mmdet.datasets.coco import CocoDataset
 from mmdet.datasets.pipelines import Compose
 
+from .mmdataset_adapter import MMDetDataSetAdapter
 
+
+@DATASETS.register_module()
 class MultiModalsDataSet(CocoDataset):
     Modals = []
 
@@ -34,7 +38,7 @@ class MultiModalsDataSet(CocoDataset):
             dict[str, list[dict]]: Annotation info from COCO api.
         """
 
-        self._coco = {modal: COCO(ann_file.format(modal = modal)) for modal in self.Modals}
+        self._coco = {modal: COCO(string.Template(ann_file).substitute(modal = modal)) for modal in self.Modals}
         self.coco = self._coco[self.Modal]
         # The order of returned `cat_ids` will not
         # change with the order of the CLASSES
@@ -126,6 +130,18 @@ class MultiModalsDataSet(CocoDataset):
             if img_info['width'] / img_info['height'] > 1:
                 self.flag[i] = 1
 
+    def prepare_img_on_modal(self, idx, modal, training = True):
+        img_info = self.data_infos[idx][modal]
+        if training:
+            ann_info = self.get_ann_info(idx, modal)
+            results = dict(img_info = img_info, ann_info = ann_info)
+        else:
+            results = dict(img_info = img_info)
+        if self.proposals is not None:
+            results['proposals'] = self.proposals[idx]
+        self.pre_pipeline(results)
+        return self.pipeline[modal](results)
+
     def prepare_img(self, idx, training = True):
         """Get data and optional annotations after pipeline.
 
@@ -137,23 +153,14 @@ class MultiModalsDataSet(CocoDataset):
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-        res = {}
-        random_state = np.random.get_state()
-        for modal in self.Modals:
-            np.random.set_state(random_state)
-            img_info = self.data_infos[idx][modal]
-            if training:
-                ann_info = self.get_ann_info(idx, modal)
-                results = dict(img_info = img_info, ann_info = ann_info)
-            else:
-                results = dict(img_info = img_info)
-            if self.proposals is not None:
-                results['proposals'] = self.proposals[idx]
-            self.pre_pipeline(results)
-            cur_res = self.pipeline[modal](results)
-            res[modal] = cur_res
-            if self.modal is not None and modal == self.modal:
-                res.update(cur_res)
+        if self.modal is None:
+            res = {}
+            random_state = np.random.get_state()
+            for modal in self.Modals:
+                np.random.set_state(random_state)
+                res[modal] = self.prepare_img_on_modal(idx, modal, training)
+        else:
+            res = self.prepare_img_on_modal(idx, self.modal, training)
         return res
 
     def prepare_train_img(self, idx):
@@ -179,3 +186,9 @@ class MultiModalsDataSet(CocoDataset):
                 pipeline.
         """
         return self.prepare_img(idx, training = False)
+
+
+class MMDetMultiModelDataSetAdapter(MMDetDataSetAdapter):
+    def __init__(self, modal = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dataset_init_kwargs['modal'] = modal
