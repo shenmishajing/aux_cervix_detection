@@ -21,12 +21,22 @@ class LightningModule(_LightningModule, ABC):
         super().__init__(*args, **kwargs)
         self.initialize_config = initialize_config
         self.normalize_config = normalize_config
+        self.batch_size = None
 
         if loss_config is not None:
             self._parse_loss_config(loss_config)
 
         if optimizer_config is not None:
             self.lr = self._parse_optimizer_config(optimizer_config)
+
+    @staticmethod
+    def add_prefix(log_dict, prefix = 'train/'):
+        return {f'{prefix}{k}': v for k, v in log_dict.items()}
+
+    def log(self, *args, batch_size = None, **kwargs):
+        if batch_size is None and hasattr(self, 'batch_size') and self.batch_size is not None:
+            batch_size = self.batch_size
+        super().log(*args, batch_size = batch_size, **kwargs)
 
     def init_weights(self):
         """Initialize the weights."""

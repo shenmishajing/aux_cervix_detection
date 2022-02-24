@@ -79,12 +79,9 @@ class MMDetModelAdapter(LightningModule, ABC):
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
 
-    def log_step(self, log_dict, prefix = 'train'):
-        for k, v in log_dict.items():
-            self.log(f'{prefix}/{k}', v)
-
     def forward_step(self, batch):
         batch = batch['acid']
+        self.batch_size = batch['img'].shape[0]
         with torch.no_grad():
             outputs = self.model.train_step(data = batch, optimizer = None)
             preds = self.model.forward_test(imgs = [batch['img']], img_metas = [batch['img_metas']])
@@ -94,13 +91,15 @@ class MMDetModelAdapter(LightningModule, ABC):
         return outputs
 
     def training_step(self, batch, batch_idx):
-        outputs = self.model.train_step(data = batch['acid'], optimizer = None)
-        self.log_step(outputs['log_vars'])
+        batch = batch['acid']
+        self.batch_size = batch['img'].shape[0]
+        outputs = self.model.train_step(data = batch, optimizer = None)
+        self.log_dict(self.add_prefix(outputs['log_vars']))
         return outputs['loss']
 
     def validation_step(self, batch, *args, **kwargs):
         outputs = self.forward_step(batch)
-        self.log_step(outputs['log_vars'], prefix = 'val')
+        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'val/'))
         return outputs
 
     def validation_epoch_end(self, outs):
@@ -108,7 +107,7 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def test_step(self, batch, *args, **kwargs):
         outputs = self.forward_step(batch)
-        self.log_step(outputs['log_vars'], prefix = 'test')
+        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'test/'))
         return outputs
 
     def test_epoch_end(self, outs):
