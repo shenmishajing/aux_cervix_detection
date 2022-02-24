@@ -50,6 +50,8 @@ class MMDetModelAdapter(LightningModule, ABC):
     def compute_metrics(self, prefix = 'val') -> None:
         for metric in self.metrics:
             metric_logs = metric.compute()
+            if not isinstance(metric_logs, dict):
+                metric_logs = {str(metric).removesuffix('()'): metric_logs}
             for k, v in metric_logs.items():
                 for entry in self.metrics_keys_to_log_to_prog_bar:
                     if entry[0] == k:
