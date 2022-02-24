@@ -38,7 +38,7 @@ class MMDetModelAdapter(LightningModule, ABC):
         super().__init__(*args, **kwargs)
         self.model = model
         self.metrics = metrics or [MeanAveragePrecision(class_metrics = True)]
-        self.metrics_keys_to_log_to_prog_bar = metrics_keys_to_log_to_prog_bar or ['map']
+        self.metrics_keys_to_log_to_prog_bar = metrics_keys_to_log_to_prog_bar or [('map_50', 'mAP')]
         for i in range(len(self.metrics_keys_to_log_to_prog_bar)):
             if isinstance(self.metrics_keys_to_log_to_prog_bar[i], str):
                 self.metrics_keys_to_log_to_prog_bar[i] = (self.metrics_keys_to_log_to_prog_bar[i], self.metrics_keys_to_log_to_prog_bar[i])
