@@ -1,25 +1,24 @@
 import copy
 from abc import ABC
-from typing import Any, Mapping, Optional, Sequence, Union
+from typing import Any, Mapping, Sequence, Union
 
 import torch
+from mmcv.runner import BaseModule
 from pytorch_lightning import LightningModule as _LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from utils import initialize, optim
+from utils import optim
 
 
-class LightningModule(_LightningModule, ABC):
+class LightningModule(_LightningModule, BaseModule, ABC):
 
     def __init__(self,
-                 initialize_config = None,
                  normalize_config = None,
                  loss_config: Mapping[str, Union[torch.nn.Module, Mapping[str, Union[torch.nn.Module, int, float]]]] = None,
                  optimizer_config = None,
                  *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.initialize_config = initialize_config
         self.normalize_config = normalize_config
         self.batch_size = None
 
@@ -37,11 +36,6 @@ class LightningModule(_LightningModule, ABC):
         if batch_size is None and hasattr(self, 'batch_size') and self.batch_size is not None:
             batch_size = self.batch_size
         super().log(*args, batch_size = batch_size, **kwargs)
-
-    def init_weights(self):
-        """Initialize the weights."""
-        if self.initialize_config:
-            initialize(self, self.initialize_config)
 
     def _parse_loss_config(self, loss_config):
         for key, value in loss_config.items():
@@ -262,9 +256,11 @@ class LightningModule(_LightningModule, ABC):
                 k, v in loss.items()}
         return loss
 
-    def setup(self, stage: Optional[str] = None) -> None:
-        if stage == 'fit':
-            self.init_weights()
+    def on_fit_start(self):
+        self.init_weights()
+
+    def _dump_init_info(self, logger_name):
+        pass
 
     def training_step(self, batch, *args, **kwargs):
         res = self(batch)
