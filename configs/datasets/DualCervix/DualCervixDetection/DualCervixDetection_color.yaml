@@ -56,35 +56,36 @@ __import__:
         to_rgb: true
 
 data:
-    class_path: datasets.MMDetMultiModelDataSetAdapter
+    class_path: datasets.MMDetDataSetAdapter
     init_args:
-        type: DualCervixDataSet
-        pipeline:
-            acid:
-                -   <<: *import_load_img_transform
-                -   type: LoadAnnotations
-                    with_bbox: true
-                -   <<: *import_resize_transform
-                -   <<: *import_acid_normalize_transform
-                -   type: RandomFlip
-                    flip_ratio: 0.5
-                -   type: DefaultFormatBundle
-                -   type: Collect
-                    keys: [ img, gt_bboxes, gt_labels ]
-            iodine:
-                -   <<: *import_load_img_transform
-                -   type: LoadAnnotations
-                    with_bbox: true
-                -   <<: *import_resize_transform
-                -   <<: *import_iodine_normalize_transform
-                -   type: RandomFlip
-                    flip_ratio: 0.5
-                -   type: DefaultFormatBundle
-                -   type: Collect
-                    keys: [ img, gt_bboxes, gt_labels ]
-        data_root: data/DualCervixDetection
-        ann_file: cropped_annos/${split}_${modal}.json
-        img_prefix: cropped_img
+        dataset_cfg:
+            type: DualCervixDataSet
+            pipeline:
+                acid:
+                    -   <<: *import_load_img_transform
+                    -   type: LoadAnnotations
+                        with_bbox: true
+                    -   <<: *import_resize_transform
+                    -   <<: *import_acid_normalize_transform
+                    -   type: RandomFlip
+                        flip_ratio: 0.5
+                    -   type: DefaultFormatBundle
+                    -   type: Collect
+                        keys: [ img, gt_bboxes, gt_labels ]
+                iodine:
+                    -   <<: *import_load_img_transform
+                    -   type: LoadAnnotations
+                        with_bbox: true
+                    -   <<: *import_resize_transform
+                    -   <<: *import_iodine_normalize_transform
+                    -   type: RandomFlip
+                        flip_ratio: 0.5
+                    -   type: DefaultFormatBundle
+                    -   type: Collect
+                        keys: [ img, gt_bboxes, gt_labels ]
+            data_root: data/DualCervixDetection
+            ann_file: cropped_annos/${split}_${modal}.json
+            img_prefix: cropped_img
         data_loader_config:
             batch_size: 32
             num_workers: 8

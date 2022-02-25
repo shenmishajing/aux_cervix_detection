@@ -5,8 +5,6 @@ from mmdet.datasets import CocoDataset, DATASETS
 from mmdet.datasets.api_wrappers import COCO
 from mmdet.datasets.pipelines import Compose
 
-from .mmdataset_adapter import MMDetDataSetAdapter
-
 
 @DATASETS.register_module()
 class MultiModalsDataSet(CocoDataset):
@@ -188,9 +186,3 @@ class MultiModalsDataSet(CocoDataset):
                 pipeline.
         """
         return self.prepare_img(idx, training = False)
-
-
-class MMDetMultiModelDataSetAdapter(MMDetDataSetAdapter):
-    def __init__(self, modal = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dataset_init_kwargs['modal'] = modal

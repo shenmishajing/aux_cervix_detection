@@ -12,35 +12,10 @@ from ..base import LightningDataModule as _LightningDataModule
 
 
 class MMDetDataSetAdapter(_LightningDataModule):
-    def __init__(self,
-                 type,
-                 ann_file,
-                 pipeline,
-                 classes = None,
-                 data_root = None,
-                 img_prefix = '',
-                 seg_prefix = None,
-                 proposal_file = None,
-                 test_mode = False,
-                 filter_empty_gt = True,
-                 file_client_args = dict(backend = 'disk'),
-                 split_format_to = 'ann_file',
-                 *args, **kwargs):
+    def __init__(self, dataset_cfg, split_format_to = 'ann_file', *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dataset_cfg = dataset_cfg
         self.split_format_to = split_format_to if split_format_to is None or isinstance(split_format_to, list) else [split_format_to]
-        self.dataset_init_kwargs = {
-            'type': type,
-            'ann_file': ann_file,
-            'pipeline': pipeline,
-            'classes': classes,
-            'data_root': data_root,
-            'img_prefix': img_prefix,
-            'seg_prefix': seg_prefix,
-            'proposal_file': proposal_file,
-            'test_mode': test_mode,
-            'filter_empty_gt': filter_empty_gt,
-            'file_client_args': file_client_args,
-        }
 
     @staticmethod
     def collate(batch):
@@ -92,7 +67,7 @@ class MMDetDataSetAdapter(_LightningDataModule):
             return default_collate(batch)
 
     def _build_data_set(self, split):
-        cfg = copy.deepcopy(self.dataset_init_kwargs)
+        cfg = copy.deepcopy(self.dataset_cfg)
         if self.split_format_to is None:
             cfg['split'] = split
         else:
