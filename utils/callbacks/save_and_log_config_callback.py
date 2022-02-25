@@ -25,6 +25,8 @@ class SaveAndLogConfigCallback(SaveConfigCallback):
         if trainer.logger is not None:
             if 'subcommand' in self.config:
                 trainer.logger.log_hyperparams(self.config[self.config['subcommand']])
+            else:
+                trainer.logger.log_hyperparams(self.config)
 
             log_dir = get_log_dir(trainer)
             assert log_dir is not None
