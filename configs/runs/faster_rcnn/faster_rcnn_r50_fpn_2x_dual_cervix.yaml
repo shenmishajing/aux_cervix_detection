@@ -1,0 +1,19 @@
+__base__:
+    - faster_rcnn_r50_fpn_1x_dual_cervix.yaml
+    - ../../schedules/schedule_2x.yaml
+
+trainer:
+    # debug
+    limit_train_batches: 1.0
+    limit_val_batches: 1.0
+    limit_test_batches: 1.0
+    limit_predict_batches: 1.0
+    fast_dev_run: false
+    overfit_batches: 0.0
+
+data:
+    init_args:
+        data_loader_config:
+            batch_size: 8
+            num_workers: 8
+            prefetch_factor: 2
