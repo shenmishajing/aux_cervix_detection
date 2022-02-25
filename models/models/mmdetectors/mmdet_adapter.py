@@ -55,7 +55,7 @@ class MMDetModelAdapter(LightningModule, ABC):
             for k, v in metric_logs.items():
                 for entry in self.metrics_keys_to_log_to_prog_bar:
                     if entry[0] == k:
-                        self.log(entry[1], v, prog_bar = True)
+                        self.log(entry[1], v, logger = False, prog_bar = True)
                     self.log(f'{prefix}/{k}', v)
             metric.reset()
 
