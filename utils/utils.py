@@ -1,7 +1,5 @@
 import os
-import copy
-
-from mmcv.cnn.utils.weight_init import _initialize
+import sys
 
 
 def get_log_dir(trainer):
@@ -27,35 +25,11 @@ def get_log_dir(trainer):
     return log_dir
 
 
-def initialize(module, initialize_config):
-    r"""Initialize a module.
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
 
-    Args:
-        module (``torch.nn.Module``): the module will be initialized.
-        initialize_config (Mapping[str, Any] | Sequence[Mapping[str, Any]]):
-            initialization configuration dict to define initializer.
-            OpenMMLab has implemented 6 initializers including
-            ``Constant``, ``Xavier``, ``Normal``, ``Uniform``,
-            ``Kaiming``, and ``Pretrained``.
-    """
-    if not isinstance(initialize_config, (dict, list)):
-        raise TypeError(f'initialize_config must be a dict or a list of dict, \
-                but got {type(initialize_config)}')
-
-    if isinstance(initialize_config, dict):
-        initialize_config = [initialize_config]
-
-    for cfg in initialize_config:
-        # should deeply copy the original config because cfg may be used by
-        # other modules, e.g., one initialize_config shared by multiple bottleneck
-        # blocks, the expected cfg will be changed after pop and will change
-        # the initialization behavior of other modules
-        cp_cfg = copy.deepcopy(cfg)
-        model_path = cp_cfg.pop('model_path', '')
-        if 'pretrained' in cp_cfg:
-            cp_cfg = {'type': 'Pretrained', 'checkpoint': cp_cfg['pretrained']}
-        m = module
-        for p in model_path.split('.'):
-            if p:
-                m = getattr(m, p)
-        _initialize(m, cp_cfg)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout

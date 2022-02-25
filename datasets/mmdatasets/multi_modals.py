@@ -5,6 +5,8 @@ from mmdet.datasets import CocoDataset, DATASETS
 from mmdet.datasets.api_wrappers import COCO
 from mmdet.datasets.pipelines import Compose
 
+from utils import HiddenPrints
+
 
 @DATASETS.register_module()
 class MultiModalsDataSet(CocoDataset):
@@ -36,7 +38,8 @@ class MultiModalsDataSet(CocoDataset):
             dict[str, list[dict]]: Annotation info from COCO api.
         """
 
-        self._coco = {modal: COCO(string.Template(ann_file).substitute(modal = modal)) for modal in self.Modals}
+        with HiddenPrints():
+            self._coco = {modal: COCO(string.Template(ann_file).substitute(modal = modal)) for modal in self.Modals}
         self.coco = self._coco[self.Modal]
         # The order of returned `cat_ids` will not
         # change with the order of the CLASSES
