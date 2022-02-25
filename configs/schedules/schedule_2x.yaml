@@ -1,16 +1,11 @@
+__base__: schedule_1x.yaml
+
 model:
     init_args:
         optimizer_config:
-            optimizer:
-                type: Adam
-                lr: 1.0e-3
-                weight_decay: 0.01
             lr_scheduler:
                 scheduler:
-                    type: MultiStepLR
                     milestones: [ 16, 22 ]
-                warmup_config:
-                    warmup_iters: 500
 
 trainer:
     max_epochs: 24

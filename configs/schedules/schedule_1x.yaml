@@ -2,9 +2,10 @@ model:
     init_args:
         optimizer_config:
             optimizer:
-                type: Adam
-                lr: 1.0e-3
-                weight_decay: 0.01
+                type: SGD
+                lr: 2.0e-2
+                momentum: 0.9
+                weight_decay: 1e-4
             lr_scheduler:
                 scheduler:
                     type: MultiStepLR
