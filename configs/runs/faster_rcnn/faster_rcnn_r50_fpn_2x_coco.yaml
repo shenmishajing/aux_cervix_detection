@@ -1,3 +1,3 @@
 __base__:
-    - faster_rcnn_r50_fpn_1x_dual_cervix.yaml
+    - faster_rcnn_r50_fpn_1x_coco.yaml
     - ../../schedules/schedule_2x.yaml
