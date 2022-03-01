@@ -90,4 +90,4 @@ data:
             batch_size: 32
             num_workers: 8
             prefetch_factor: 2
-            drop_last: true
+            pin_memory: true
