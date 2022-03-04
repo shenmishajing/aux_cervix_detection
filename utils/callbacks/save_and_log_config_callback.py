@@ -1,3 +1,4 @@
+import copy
 import os
 from typing import Optional
 
@@ -19,14 +20,17 @@ class SaveAndLogConfigCallback(SaveConfigCallback):
                 trainer.logger._wandb_init['name'] = name
                 trainer.logger._name = name
 
+    @staticmethod
+    def process_config(config):
+        config = copy.deepcopy(config)
+        config['trainer']['callbacks'] = [c.as_dict() for c in config['trainer']['callbacks']]
+        return config
+
     def setup(self, trainer: Trainer, pl_module: LightningModule, stage: Optional[str] = None) -> None:
         # save the config in `setup` because (1) we want it to save regardless of the trainer function run
         # and we want to save before processes are spawned
         if trainer.logger is not None:
-            if 'subcommand' in self.config:
-                trainer.logger.log_hyperparams(self.config[self.config['subcommand']])
-            else:
-                trainer.logger.log_hyperparams(self.config)
+            trainer.logger.log_hyperparams(self.process_config(self.config))
 
             log_dir = get_log_dir(trainer)
             assert log_dir is not None
