@@ -1,4 +1,4 @@
-__base__: ../DualCervixDetection/DualCervixDetection_color.yaml
+__base__: ../DualCervix_color.yaml
 
 __import__:
     import_gen_segmentation_from_bbox_transform: &import_gen_segmentation_from_bbox_transform

@@ -1,29 +1,10 @@
-__base__: DualCervixDetection_color.yaml
+__base__: ../DualCervix_grayscale.yaml
 
-__import__:
-    import_load_img_transform: &import_load_img_transform
-        type: LoadImageFromFile
-        color_type: grayscale
-
-    import_acid_normalize_transform: &import_acid_normalize_transform
-        type: Normalize
-        mean: [ 122.95729064941406 ]
-        std: [ 15.282942771911621 ]
-        to_rgb: false
-    import_iodine_normalize_transform: &import_iodine_normalize_transform
-        type: Normalize
-        mean: [ 83.96733856201172 ]
-        std: [ 20.51559829711914 ]
-        to_rgb: false
-
-data:
-    init_args:
-        pipeline:
-            acid:
-                change_item:
-                    - [ 0, *import_load_img_transform ]
-                    - [ 3, *import_acid_normalize_transform ]
-            iodine:
-                change_item:
-                    - [ 0, *import_load_img_transform ]
-                    - [ 3, *import_iodine_normalize_transform ]
+trainer:
+    callbacks:
+        change_item:
+            -   - -1
+                -   init_args:
+                        monitor: val/map_50
+                        filename: 'epoch:{epoch}-val_map_50:{val/map_50:.4g}'
+                        mode: max
