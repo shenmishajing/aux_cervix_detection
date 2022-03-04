@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from pytorch_lightning.core.datamodule import LightningDataModule as _LightningDataModule
 from torch.utils.data import DataLoader, IterableDataset
 
-from utils.cli.yaml import deep_update
+from utils.cli.yaml_with_merge import deep_update
 
 
 class LightningDataModule(_LightningDataModule):

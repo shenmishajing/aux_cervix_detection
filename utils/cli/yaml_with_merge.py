@@ -1,10 +1,11 @@
 import copy
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 
-from jsonargparse import Path, get_config_read_mode
-from jsonargparse.loaders_dumpers import load_value
+from jsonargparse import Path, get_config_read_mode, set_loader
+from jsonargparse.loaders_dumpers import yaml_load
 from jsonargparse.util import change_to_path_dir
+from pytorch_lightning.utilities.cli import LightningArgumentParser
 
 
 def deep_update(source, override):
@@ -91,7 +92,7 @@ def get_cfg_from_path(cfg_path):
     fpath = Path(cfg_path, mode = get_config_read_mode())
     with change_to_path_dir(fpath):
         cfg_str = fpath.get_content()
-        parsed_cfg = load_value(cfg_str)
+        parsed_cfg = yaml_load(cfg_str)
     return parsed_cfg
 
 
@@ -142,7 +143,7 @@ def parse_path(cfg_path, seen_cfg = None, **kwargs):
 def parse_str(cfg_str, cfg_path = None, seen_cfg = None, **kwargs):
     if seen_cfg is None:
         seen_cfg = {}
-    cfg_file = load_value(cfg_str)
+    cfg_file = yaml_load(cfg_str)
     if cfg_path is not None:
         abs_cfg_path = os.path.abspath(cfg_path)
         if abs_cfg_path in seen_cfg:
@@ -151,7 +152,23 @@ def parse_str(cfg_str, cfg_path = None, seen_cfg = None, **kwargs):
             else:
                 return copy.deepcopy(seen_cfg[abs_cfg_path])
         seen_cfg[abs_cfg_path] = None
-    cfg_file = parse_config(cfg_file, cfg_path = cfg_path, seen_cfg = seen_cfg, **kwargs)
+    if isinstance(cfg_file, dict):
+        cfg_file = parse_config(cfg_file, cfg_path = cfg_path, seen_cfg = seen_cfg, **kwargs)
     if cfg_path is not None:
         seen_cfg[abs_cfg_path] = cfg_file
     return cfg_file
+
+
+def yaml_with_merge_load(stream, path = None, ext_vars = None):
+    config = parse_str(stream, path = path)
+    if ext_vars is not None and isinstance(ext_vars, dict) and isinstance(config, dict):
+        config = deep_update(config, ext_vars)
+    return config
+
+
+set_loader('yaml_with_merge', yaml_with_merge_load)
+
+
+class ArgumentParser(LightningArgumentParser):
+    def __init__(self, parser_mode: str = 'yaml_with_merge', *args: Any, **kwargs: Any) -> None:
+        super().__init__(parser_mode = parser_mode, *args, **kwargs)
