@@ -1,7 +1,7 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/DualCervix/DualCervixDetection/DualCervixDetection_color.yaml
     - ../../models/faster_rcnn/faster_rcnn_r50_fpn.yaml
+    - ../../datasets/DualCervix/DualCervixDetection/DualCervixDetection_color.yaml
     - ../../schedules/schedule_1x.yaml
 
 model:
@@ -24,6 +24,6 @@ trainer:
 data:
     init_args:
         data_loader_config:
-            batch_size: 8
+            batch_size: 16
             num_workers: 8
             prefetch_factor: 2

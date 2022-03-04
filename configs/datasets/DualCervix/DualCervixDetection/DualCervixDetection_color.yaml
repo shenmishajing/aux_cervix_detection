@@ -91,3 +91,6 @@ data:
             num_workers: 8
             prefetch_factor: 2
             pin_memory: true
+
+model:
+    class_path: models.models.mmdetectors.MMDetMultiModalsModelAdapter

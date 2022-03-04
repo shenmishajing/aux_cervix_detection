@@ -1,7 +1,7 @@
 __base__:
     - ../../default_runtime.yaml
-    - ../../datasets/coco/coco_detection.yaml
     - ../../models/faster_rcnn/faster_rcnn_r50_fpn.yaml
+    - ../../datasets/coco/coco_detection.yaml
     - ../../schedules/schedule_1x.yaml
 
 trainer:
