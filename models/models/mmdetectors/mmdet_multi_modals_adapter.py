@@ -30,7 +30,7 @@ class MMDetMultiModalsModelAdapter(MMDetModelAdapter, ABC):
             pred = [bbox.cpu().numpy() for bbox in preds[i]]
             res = []
             for modal in [self.modal] + [m for m in self.modals if m != self.modal]:
-                img = self.unnormarlize_img(imgs[modal][i], batch[modal]['img_metas'][i]['img_norm_cfg'])
+                img = self.denormalize_img(imgs[modal][i], batch[modal]['img_metas'][i]['img_norm_cfg'])
                 ann = {'gt_bboxes': batch[modal]['gt_bboxes'][i].cpu().numpy(), 'gt_labels': batch[modal]['gt_labels'][i].cpu().numpy()}
                 res.append(imshow_gt_det_bboxes(img, ann, pred, class_names = self.class_names, show = False, **self.imshow_kwargs))
             res = np.concatenate(res, axis = 1)

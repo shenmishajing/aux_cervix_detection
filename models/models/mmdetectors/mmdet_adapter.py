@@ -147,14 +147,14 @@ class MMDetModelAdapter(LightningModule, ABC):
         os.makedirs(self.output_path)
 
     @staticmethod
-    def unnormarlize_img(img, img_norm_cfg):
+    def denormalize_img(img, img_norm_cfg):
         return mmcv.rgb2bgr(img * img_norm_cfg['std'] + img_norm_cfg['mean']).astype(np.uint8)
 
     def predict_step(self, batch, *args, **kwargs):
         preds = self.model.simple_test(**batch)
         imgs = batch['img'].permute(0, 2, 3, 1).cpu().numpy()
         for i in range(len(preds)):
-            img = self.unnormarlize_img(imgs[i], batch['img_metas'][i]['img_norm_cfg'])
+            img = self.denormalize_img(imgs[i], batch['img_metas'][i]['img_norm_cfg'])
             ann = {'gt_bboxes': batch['gt_bboxes'][i].cpu().numpy(), 'gt_labels': batch['gt_labels'][i].cpu().numpy()}
             pred = [bbox.cpu().numpy() for bbox in preds[i]]
             imshow_gt_det_bboxes(img, ann, pred, class_names = self.class_names, show = False, **self.imshow_kwargs,
