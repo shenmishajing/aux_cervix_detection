@@ -46,7 +46,7 @@ class LightningDataModule(_LightningDataModule):
         elif stage == 'fit':
             split_names = ['train', 'val']
         else:
-            split_names = [stage]
+            split_names = [stage.lower()]
 
         for name in split_names:
             self._setup_dataset(name)
