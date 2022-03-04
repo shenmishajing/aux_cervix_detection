@@ -71,7 +71,16 @@ class MMDetModelAdapter(LightningModule, ABC):
     def compute_metrics(self, prefix = 'val') -> None:
         for metric in self.metrics:
             metric_logs = metric.compute()
-            if not isinstance(metric_logs, dict):
+            if isinstance(metric, MeanAveragePrecision):
+                metric_logs = dict(metric_logs)
+                labels = [int(c) for c in metric._get_classes()]
+                for k in [k for k in metric_logs if k.endswith('per_class')]:
+                    res = metric_logs.pop(k)
+                    if metric.class_metrics and res.ndim and len(labels) > 1:
+                        for i in range(len(res)):
+                            name = self.dataset.coco.loadCats(self.dataset.cat_ids[labels[i]])[0]['name']
+                            metric_logs[k.replace('per_class', name)] = res[i]
+            elif not isinstance(metric_logs, dict):
                 metric_logs = {str(metric).removesuffix('()'): metric_logs}
             for k, v in metric_logs.items():
                 for entry in self.metrics_keys_to_log_to_prog_bar:
