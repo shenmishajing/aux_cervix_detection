@@ -8,24 +8,25 @@ from utils.cli.yaml import deep_update
 
 
 class LightningDataModule(_LightningDataModule):
+    SPLIT_NAMES = ['train', 'val', 'test', 'predict']
+
     def __init__(self, data_loader_config = None, split_name_map = None):
         super().__init__()
-        split_names = ['train', 'val', 'test', 'predict']
         if split_name_map is None:
-            self.split_name_map = {split_name: split_name for split_name in split_names}
+            self.split_name_map = {}
         else:
             self.split_name_map = split_name_map
-        for name in split_names:
+        for name in self.SPLIT_NAMES:
             self.split_name_map.setdefault(name, name if name != 'predict' else 'test')
 
         self.data_loader_config = {} if data_loader_config is None else data_loader_config
 
-        if all([self.data_loader_config.get(name) is None for name in split_names]):
-            self.data_loader_config = {name: copy.deepcopy(self.data_loader_config) for name in split_names}
+        if all([self.data_loader_config.get(name) is None for name in self.SPLIT_NAMES]):
+            self.data_loader_config = {name: copy.deepcopy(self.data_loader_config) for name in self.SPLIT_NAMES}
         else:
-            for main_name in split_names:
+            for main_name in self.SPLIT_NAMES:
                 if self.data_loader_config.get(main_name) is not None:
-                    for name in [n for n in split_names if n != main_name]:
+                    for name in [n for n in self.SPLIT_NAMES if n != main_name]:
                         if self.data_loader_config.get(name) is None:
                             self.data_loader_config[name] = copy.deepcopy(self.data_loader_config[main_name])
                         else:
