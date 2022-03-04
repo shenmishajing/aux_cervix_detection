@@ -154,7 +154,7 @@ class MultiModalsDataSet(CocoDataset):
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-        if self.main_modal_only is not None:
+        if self.main_modal_only:
             res = self.prepare_img_on_modal(idx, self.Modal, training)
         else:
             res = {}
