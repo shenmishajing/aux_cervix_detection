@@ -43,7 +43,6 @@ class MMDetModelAdapter(LightningModule, ABC):
         """
         super().__init__(*args, **kwargs)
         self.dataset = None
-        self.class_names = ()
         self.model = model
         self.metrics = metrics or [MeanAveragePrecision(class_metrics = True)]
         self.metrics_keys_to_log_to_prog_bar = metrics_keys_to_log_to_prog_bar or [('map_50', 'mAP')]
@@ -58,16 +57,12 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def setup(self, stage = None):
         self.get_dataset()
-        self.get_class_names()
 
     def get_dataset(self):
         for name in self.trainer.datamodule.SPLIT_NAMES:
             if name in self.trainer.datamodule.datasets:
                 self.dataset = self.trainer.datamodule.datasets[name]
                 break
-
-    def get_class_names(self):
-        self.class_names = self.dataset.CLASSES
 
     def update_metrics(self, preds, target):
         for metric in self.metrics:
@@ -157,5 +152,5 @@ class MMDetModelAdapter(LightningModule, ABC):
             img = self.denormalize_img(imgs[i], batch['img_metas'][i]['img_norm_cfg'])
             ann = {'gt_bboxes': batch['gt_bboxes'][i].cpu().numpy(), 'gt_labels': batch['gt_labels'][i].cpu().numpy()}
             pred = [bbox.cpu().numpy() for bbox in preds[i]]
-            imshow_gt_det_bboxes(img, ann, pred, class_names = self.class_names, show = False, **self.imshow_kwargs,
+            imshow_gt_det_bboxes(img, ann, pred, class_names = self.dataset.CLASSES, show = False, **self.imshow_kwargs,
                                  out_file = os.path.join(self.output_path, batch['img_metas'][i]['ori_filename']))
