@@ -1,7 +1,12 @@
+import os
+import shutil
 from abc import ABC
 from typing import List, Union
 
+import mmcv
+import numpy as np
 import torch
+from mmdet.core.visualization import imshow_gt_det_bboxes
 from torch import nn
 from torchmetrics.detection import MeanAveragePrecision
 from torchmetrics.metric import Metric
@@ -28,6 +33,7 @@ class MMDetModelAdapter(LightningModule, ABC):
             model: nn.Module,
             metrics: List[Metric] = None,
             metrics_keys_to_log_to_prog_bar: List[Union[str, tuple]] = None,
+            imshow_kwargs = None,
             *args, **kwargs
     ):
         """
@@ -36,12 +42,32 @@ class MMDetModelAdapter(LightningModule, ABC):
         mAP is logged to the progressbar.
         """
         super().__init__(*args, **kwargs)
+        self.dataset = None
+        self.class_names = ()
         self.model = model
         self.metrics = metrics or [MeanAveragePrecision(class_metrics = True)]
         self.metrics_keys_to_log_to_prog_bar = metrics_keys_to_log_to_prog_bar or [('map_50', 'mAP')]
         for i in range(len(self.metrics_keys_to_log_to_prog_bar)):
             if isinstance(self.metrics_keys_to_log_to_prog_bar[i], str):
                 self.metrics_keys_to_log_to_prog_bar[i] = (self.metrics_keys_to_log_to_prog_bar[i], self.metrics_keys_to_log_to_prog_bar[i])
+
+        if imshow_kwargs is None:
+            self.imshow_kwargs = {'score_thr': 0.5}
+        else:
+            self.imshow_kwargs = imshow_kwargs
+
+    def setup(self, stage = None):
+        self.get_dataset()
+        self.get_class_names()
+
+    def get_dataset(self):
+        for name in self.trainer.datamodule.SPLIT_NAMES:
+            if name in self.trainer.datamodule.datasets:
+                self.dataset = self.trainer.datamodule.datasets[name]
+                break
+
+    def get_class_names(self):
+        self.class_names = self.dataset.CLASSES
 
     def update_metrics(self, preds, target):
         for metric in self.metrics:
@@ -112,3 +138,24 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def test_epoch_end(self, outs):
         self.compute_metrics('test')
+
+    def on_predict_start(self) -> None:
+        log_dir = os.path.dirname(os.path.dirname(self.trainer.predicted_ckpt_path))
+        self.output_path = os.path.join(log_dir, 'visualization')
+        if os.path.exists(self.output_path):
+            shutil.rmtree(self.output_path)
+        os.makedirs(self.output_path)
+
+    @staticmethod
+    def unnormarlize_img(img, img_norm_cfg):
+        return mmcv.rgb2bgr(img * img_norm_cfg['std'] + img_norm_cfg['mean']).astype(np.uint8)
+
+    def predict_step(self, batch, *args, **kwargs):
+        preds = self.model.simple_test(**batch)
+        imgs = batch['img'].permute(0, 2, 3, 1).cpu().numpy()
+        for i in range(len(preds)):
+            img = self.unnormarlize_img(imgs[i], batch['img_metas'][i]['img_norm_cfg'])
+            ann = {'gt_bboxes': batch['gt_bboxes'][i].cpu().numpy(), 'gt_labels': batch['gt_labels'][i].cpu().numpy()}
+            pred = [bbox.cpu().numpy() for bbox in preds[i]]
+            imshow_gt_det_bboxes(img, ann, pred, class_names = self.class_names, show = False, **self.imshow_kwargs,
+                                 out_file = os.path.join(self.output_path, batch['img_metas'][i]['ori_filename']))
