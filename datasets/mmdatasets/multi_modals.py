@@ -19,10 +19,10 @@ class MultiModalsDataSet(CocoDataset):
         else:
             cls.Modal = cls.Modals[0]
 
-    def __init__(self, ann_file, pipeline, modal = None, *args, **kwargs):
+    def __init__(self, ann_file, pipeline, modal = None, main_modal_only = False, *args, **kwargs):
         self.set_main_modal(modal)
         super().__init__(ann_file = ann_file, pipeline = [], *args, **kwargs)
-        self.modal = modal
+        self.main_modal_only = main_modal_only
         # processing pipeline
         if not isinstance(pipeline, dict):
             pipeline = {modal: pipeline for modal in self.Modals}
@@ -154,8 +154,8 @@ class MultiModalsDataSet(CocoDataset):
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-        if self.modal is not None:
-            res = self.prepare_img_on_modal(idx, self.modal, training)
+        if self.main_modal_only is not None:
+            res = self.prepare_img_on_modal(idx, self.Modal, training)
         else:
             res = {}
             random_state = np.random.get_state()
