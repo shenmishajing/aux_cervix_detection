@@ -1,30 +1,44 @@
-import os
+from collections import defaultdict
 
+from mmdet.datasets.pipelines import Compose, LoadImageFromFile
 from tqdm import trange
 
-from datasets.dual_cervix import DualCervixDataSet
+from utils import CLI
+
+
+def get_pipeline(pipeline):
+    transforms = pipeline.transforms
+    for i in range(len(transforms)):
+        if isinstance(transforms[i], LoadImageFromFile):
+            break
+    return Compose(transforms[:i + 1])
+
+
+def calculate_on_part(get_data_fn, dataset):
+    img_shape = defaultdict(int)
+    for i in trange(len(dataset)):
+        res = get_data_fn(dataset, i)
+        img_shape[res['img_shape'][:2][::-1]] += 1
+    return img_shape
 
 
 def main():
-    dataset = DualCervixDataSet(
-        pipeline = [
-            dict(type = 'LoadImageFromFile'),
-        ],
-        data_root = 'data/DualCervixDetection',
-        ann_file = os.path.join('cropped_annos', 'train_{part}.json'),
-        img_prefix = 'cropped_img')
+    cli = CLI(run = False)
+    cli.datamodule._setup_dataset('train')
+    dataset = cli.datamodule.datasets['train']
 
-    ori_shape = {}
-    for i in trange(len(dataset)):
-        res = dataset[i]
-        for part in res:
-            if part not in ori_shape:
-                ori_shape[part] = {}
-            if res[part]['ori_shape'] not in ori_shape[part]:
-                ori_shape[part][res[part]['ori_shape']] = 1
-            else:
-                ori_shape[part][res[part]['ori_shape']] += 1
-    print(f'ori_shape: {ori_shape}')
+    pipeline = dataset.pipeline
+    if isinstance(pipeline, list):
+        dataset.pipeline = [get_pipeline(p) for p in pipeline]
+        img_shape = [calculate_on_part(lambda d, i: d[i][index], dataset) for index in range(len(pipeline))]
+    elif isinstance(pipeline, dict):
+        dataset.pipeline = {k: get_pipeline(pipeline[k]) for k in pipeline}
+        img_shape = {k: calculate_on_part(lambda d, i: d[i][k], dataset) for k in pipeline}
+    else:
+        dataset.pipeline = get_pipeline(pipeline)
+        img_shape = calculate_on_part(lambda d, i: d[i], dataset)
+
+    print(img_shape)
 
 
 if __name__ == '__main__':
