@@ -1,0 +1,54 @@
+__import__:
+    import_load_img_transform: &import_load_img_transform
+        type: LoadImageFromFile
+        color_type: color
+
+    import_img_scale: &import_img_scale
+        img_scale: [ 1024, 768 ]
+    import_resize_transform: &import_resize_transform
+        type: Resize
+        <<: *import_img_scale
+        keep_ratio: true
+
+    import_normalize_transform: &import_normalize_transform
+        type: Normalize
+        mean: [ 198.74581909179688, 201.6212158203125, 202.6605224609375 ]
+        std: [ 7.600828647613525, 7.430180072784424, 7.286349296569824 ]
+        to_rgb: true
+
+data:
+    class_path: datasets.MMDetDataSetAdapter
+    init_args:
+        dataset_cfg:
+            type: TCTDataSet
+            pipeline:
+                -   <<: *import_load_img_transform
+                -   type: LoadAnnotations
+                    with_bbox: true
+                -   <<: *import_resize_transform
+                -   type: RandomFlip
+                    flip_ratio: 0.5
+                -   <<: *import_normalize_transform
+                -   type: Pad
+                    size_divisor: 32
+                -   type: DefaultFormatBundle
+                -   type: Collect
+                    keys: [ img, gt_bboxes, gt_labels ]
+            data_root: data/TCTDetection
+            ann_file: annotations/${split}.json
+            img_prefix: ${split}2017
+        split_format_to: [ ann_file, img_prefix ]
+        data_loader_config:
+            batch_size: 32
+            num_workers: 8
+            prefetch_factor: 2
+            pin_memory: true
+
+trainer:
+    callbacks:
+        change_item:
+            -   - -1
+                -   init_args:
+                        monitor: val/map_50
+                        filename: 'epoch:{epoch}-val_map_50:{val/map_50:.4g}'
+                        mode: max
