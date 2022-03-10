@@ -128,7 +128,7 @@ class MMDetModelAdapter(LightningModule, ABC):
         return preds, target
 
     def forward(self, *args, **kwargs):
-        return self.model(*args, **kwargs)
+        return self.training_step(*args, **kwargs)
 
     def forward_step(self, batch):
         self.batch_size = batch['img'].shape[0]
