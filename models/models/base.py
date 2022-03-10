@@ -97,7 +97,7 @@ class LightningModule(_LightningModule, BaseModule, ABC):
         """
         Configure optimizers for model.
         """
-        optimizer_config = self.optimizer_config.copy()
+        optimizer_config = copy.deepcopy(self.optimizer_config)
 
         # construct optimizer
         optimizer_config['optimizer'] = self._construct_optimizers(optimizer_config['optimizer'])
