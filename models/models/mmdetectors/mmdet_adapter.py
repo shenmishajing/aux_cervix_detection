@@ -1,7 +1,6 @@
 import os
 import shutil
 from abc import ABC
-from typing import List, Union
 
 import mmcv
 import numpy as np
@@ -9,7 +8,6 @@ import torch
 from mmdet.core.visualization import imshow_gt_det_bboxes
 from torch import nn
 from torchmetrics.detection import MeanAveragePrecision
-from torchmetrics.metric import Metric
 
 from models.models.base import LightningModule
 
@@ -31,29 +29,35 @@ class MMDetModelAdapter(LightningModule, ABC):
     def __init__(
             self,
             model: nn.Module,
-            metrics: List[Metric] = None,
-            metrics_keys_to_log_to_prog_bar: List[Union[str, tuple]] = None,
+            metrics: nn.ModuleList = None,
+            metrics_log_info = None,
             imshow_kwargs = None,
             *args, **kwargs
     ):
         """
-        To show a metric in the progressbar a list of tupels can be provided for metrics_keys_to_log_to_prog_bar, the first
+        To show a metric in the progressbar a list of tupels can be provided for metrics_log_info, the first
         entry has to be the name of the metric to log and the second entry the display name in the progressbar. By default the
         mAP is logged to the progressbar.
         """
         super().__init__(*args, **kwargs)
         self.dataset = None
         self.model = model
-        self.metrics = metrics or [MeanAveragePrecision(class_metrics = True)]
-        self.metrics_keys_to_log_to_prog_bar = metrics_keys_to_log_to_prog_bar or [('map_50', 'mAP')]
-        for i in range(len(self.metrics_keys_to_log_to_prog_bar)):
-            if isinstance(self.metrics_keys_to_log_to_prog_bar[i], str):
-                self.metrics_keys_to_log_to_prog_bar[i] = (self.metrics_keys_to_log_to_prog_bar[i], self.metrics_keys_to_log_to_prog_bar[i])
+        if metrics is None:
+            metrics, metrics_log_info = self.get_default_metrics()
+        if len(metrics) > len(metrics_log_info):
+            metrics_log_info += [{} for _ in range(len(metrics) - len(metrics_log_info))]
+        self.metrics = metrics
+        self.metrics_log_info = metrics_log_info
 
         if imshow_kwargs is None:
             self.imshow_kwargs = {'score_thr': 0.5}
         else:
             self.imshow_kwargs = imshow_kwargs
+
+    def get_default_metrics(self):
+        metrics = nn.ModuleList([MeanAveragePrecision(class_metrics = True)])
+        metrics_log_info = [{'prog_bar': [('map_50', 'mAP')]}]
+        return metrics, metrics_log_info
 
     def setup(self, stage = None):
         self.get_dataset()
@@ -66,8 +70,9 @@ class MMDetModelAdapter(LightningModule, ABC):
             metric.update(preds, target)
 
     def compute_metrics(self, prefix = 'val') -> None:
-        for metric in self.metrics:
+        for metric, metric_log_info in zip(self.metrics, self.metrics_log_info):
             metric_logs = metric.compute()
+
             if isinstance(metric, MeanAveragePrecision):
                 metric_logs = dict(metric_logs)
                 labels = [int(c) for c in metric._get_classes()]
@@ -78,12 +83,30 @@ class MMDetModelAdapter(LightningModule, ABC):
                             name = self.dataset.coco.loadCats(self.dataset.cat_ids[labels[i]])[0]['name']
                             metric_logs[k.replace('per_class', name)] = res[i]
             elif not isinstance(metric_logs, dict):
-                metric_logs = {str(metric).removesuffix('()'): metric_logs}
+                if 'log_name' in metric_log_info:
+                    metric_logs = {metric_log_info['log_name']: metric_logs}
+                else:
+                    metric_logs = {str(metric).removesuffix('()'): metric_logs}
+
             for k, v in metric_logs.items():
-                for entry in self.metrics_keys_to_log_to_prog_bar:
-                    if entry[0] == k:
-                        self.log(entry[1], v, logger = False, prog_bar = True)
-                    self.log(f'{prefix}/{k}', v)
+                self.log(f'{prefix}/{k}', v)
+
+            if 'prog_bar' in metric_log_info:
+                if not isinstance(metric_log_info['prog_bar'], list):
+                    metric_log_info['prog_bar'] = [metric_log_info['prog_bar']]
+                for item in metric_log_info['prog_bar']:
+                    key = value = None
+                    if not isinstance(item, tuple) and len(metric_logs) == 1:
+                        key = item
+                        value = list(metric_logs.values())[0]
+                    elif len(metric_logs) > 1:
+                        if not isinstance(item, tuple):
+                            item = (item, item)
+                        if item[0] in metric_logs:
+                            key = item[0]
+                            value = metric_logs[key]
+                    if key is not None:
+                        self.log(key, value, logger = False, prog_bar = True)
             metric.reset()
 
     @staticmethod
