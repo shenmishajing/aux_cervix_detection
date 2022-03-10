@@ -132,9 +132,8 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def forward_step(self, batch):
         self.batch_size = batch['img'].shape[0]
-        with torch.no_grad():
-            outputs = self.model.train_step(data = batch, optimizer = None)
-            preds = self.model.simple_test(**batch)
+        outputs = self.model.train_step(data = batch, optimizer = None)
+        preds = self.model.simple_test(**batch)
 
         preds, target = self.convert_raw_predictions(batch, preds)
         self.update_metrics(preds, target)
