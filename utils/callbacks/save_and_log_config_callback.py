@@ -23,7 +23,7 @@ class SaveAndLogConfigCallback(SaveConfigCallback):
     @staticmethod
     def process_config(config):
         config = copy.deepcopy(config)
-        config['trainer']['callbacks'] = [c.as_dict() for c in config['trainer']['callbacks']]
+        config['trainer']['init_args']['callbacks'] = [c.as_dict() for c in config['trainer']['init_args']['callbacks']]
         return config
 
     def setup(self, trainer: Trainer, pl_module: LightningModule, stage: Optional[str] = None) -> None:

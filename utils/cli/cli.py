@@ -2,7 +2,7 @@ from typing import Any, Callable, Optional, Type, Union
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.cli import CALLBACK_REGISTRY, DATAMODULE_REGISTRY, LightningArgumentParser, LightningCLI, MODEL_REGISTRY, \
-    SaveConfigCallback
+    SaveConfigCallback, instantiate_class
 
 from utils.callbacks.save_and_log_config_callback import SaveAndLogConfigCallback
 from .yaml_with_merge import ArgumentParser
@@ -58,3 +58,20 @@ class CLI(LightningCLI):
         self.model = self._get(self.config_init, "model")
         self._add_configure_optimizers_method_to_model(self.subcommand)
         self.trainer = self._get(self.config_init, "trainer")
+
+        if "callbacks" in self.trainer_defaults:
+            if not isinstance(self.trainer_defaults["callbacks"], list):
+                callbacks = [self.trainer_defaults["callbacks"]]
+            else:
+                callbacks = self.trainer_defaults["callbacks"]
+            for c in callbacks:
+                self.trainer.callbacks.append(instantiate_class(None, c))
+        if self.save_config_callback and not self.trainer.fast_dev_run:
+            config_callback = self.save_config_callback(
+                self._parser(self.subcommand),
+                self.config.get(str(self.subcommand), self.config),
+                self.save_config_filename,
+                overwrite = self.save_config_overwrite,
+                multifile = self.save_config_multifile,
+            )
+            self.trainer.callbacks.append(config_callback)
