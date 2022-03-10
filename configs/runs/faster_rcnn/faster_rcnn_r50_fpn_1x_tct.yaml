@@ -12,15 +12,6 @@ model:
                     bbox_head:
                         num_classes: 5
 
-trainer:
-    # debug
-    limit_train_batches: 1.0
-    limit_val_batches: 1.0
-    limit_test_batches: 1.0
-    limit_predict_batches: 1.0
-    fast_dev_run: false
-    overfit_batches: 0.0
-
 data:
     init_args:
         data_loader_config:

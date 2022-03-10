@@ -8,4 +8,5 @@ model:
                     milestones: [ 16, 22 ]
 
 trainer:
-    max_epochs: 24
+    init_args:
+        max_epochs: 24

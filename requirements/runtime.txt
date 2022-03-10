@@ -1,4 +1,4 @@
-pandas
+sklearn
 pytorch-lightning
 jsonargparse[all]
 mmdet
