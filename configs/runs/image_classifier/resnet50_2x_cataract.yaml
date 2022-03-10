@@ -1,0 +1,3 @@
+__base__:
+    - resnet50_1x_cataract.yaml
+    - ../../schedules/schedule_2x.yaml

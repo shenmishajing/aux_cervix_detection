@@ -1,0 +1,49 @@
+__import__:
+    import_load_img_transform: &import_load_img_transform
+        type: LoadImageFromFile
+        color_type: color
+
+    import_img_scale: &import_img_scale
+        size: !!python/tuple [ 1200, 1200 ]
+    import_resize_transform: &import_resize_transform
+        type: Resize
+        <<: *import_img_scale
+
+    import_normalize_transform: &import_normalize_transform
+        type: Normalize
+        mean: [ 74.70364379882812, 77.83037567138672, 79.49059295654297 ]
+        std: [ 40.09847640991211, 36.859676361083984, 37.57963180541992 ]
+        to_rgb: true
+
+data:
+    class_path: datasets.MMDetDataSetAdapter
+    init_args:
+        dataset_cfg:
+            type: CataractDataSet
+            pipeline:
+                -   <<: *import_load_img_transform
+                -   <<: *import_resize_transform
+                -   type: RandomFlip
+                    flip_prob: 0.5
+                -   <<: *import_normalize_transform
+                -   type: ImageToTensor
+                    keys: [ img ]
+                -   type: ToTensor
+                    keys: [ gt_label ]
+                -   type: Collect
+                    keys:
+                        - img
+                        - gt_label
+                        - center_label
+                        - center_turbidity
+                        - center_pervade_turbidity
+                        - border_label
+                        - border_turbidity
+                        - border_pervade_turbidity
+            data_prefix: data/cataract/ROI/crop_region_t
+            ann_file: data/cataract/C_${split}_add_2.csv
+        data_loader_config:
+            batch_size: 32
+            num_workers: 8
+            prefetch_factor: 2
+            pin_memory: true

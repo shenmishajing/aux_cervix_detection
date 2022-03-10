@@ -9,7 +9,7 @@ from utils import CLI
 def get_pipeline(pipeline):
     transforms = pipeline.transforms
     for i in range(len(transforms)):
-        if isinstance(transforms[i], LoadImageFromFile):
+        if isinstance(transforms[i], LoadImageFromFile) or transforms[i].__class__.__name__ == 'LoadImageFromFile':
             break
     return Compose(transforms[:i + 1])
 

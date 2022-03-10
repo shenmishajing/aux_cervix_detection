@@ -1,0 +1,31 @@
+__base__:
+    - ../../default_runtime.yaml
+    - ../../models/image_classifier/resnet50.yaml
+    - ../../datasets/cataract/cataract_classification.yaml
+    - ../../schedules/schedule_1x.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                head:
+                    num_classes: 7
+        optimizer_config:
+            optimizer:
+                lr: 5e-3
+
+trainer:
+    # debug
+    limit_train_batches: 1.0
+    limit_val_batches: 1.0
+    limit_test_batches: 1.0
+    limit_predict_batches: 1.0
+    fast_dev_run: false
+    overfit_batches: 0.0
+
+data:
+    init_args:
+        data_loader_config:
+            batch_size: 8
+            num_workers: 8
+            prefetch_factor: 2

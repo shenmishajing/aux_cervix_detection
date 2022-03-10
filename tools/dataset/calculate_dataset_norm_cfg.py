@@ -14,7 +14,7 @@ def add_item(sum_dict, value, num):
 def get_pipeline(pipeline):
     transforms = pipeline.transforms
     for i in range(len(transforms)):
-        if isinstance(transforms[i], Normalize):
+        if isinstance(transforms[i], Normalize) or transforms[i].__class__.__name__ == 'Normalize':
             break
     transforms[i].mean[...] = 0
     transforms[i].std[...] = 1
