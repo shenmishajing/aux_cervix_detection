@@ -98,10 +98,9 @@ class MMDetModelAdapter(LightningModule, ABC):
 
         return {'boxes': boxes, 'scores': scores, 'labels': labels}
 
-    @staticmethod
-    def convert_raw_predictions(batch, preds):
+    def convert_raw_predictions(self, batch, preds):
         """Convert raw predictions from the model to library standard."""
-        preds = [MMDetModelAdapter.unpack_preds(p) for p in preds]
+        preds = [self.unpack_preds(p) for p in preds]
         target = [{'boxes': batch['gt_bboxes'][i], 'labels': batch['gt_labels'][i]} for i in range(len(preds))]
         return preds, target
 
