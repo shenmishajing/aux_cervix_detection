@@ -10,12 +10,12 @@ from ..utils import get_log_dir
 
 
 class KFoldLoop(Loop):
-    def __init__(self, num_folds: int) -> None:
+    def __init__(self, num_folds: int, fit_loop: FitLoop = None) -> None:
         super().__init__()
         self.num_folds = num_folds
         self.current_fold = 0
         self._export_path = None
-        self.fit_loop = None
+        self.fit_loop = fit_loop
         self.lightning_module_state_dict = None
 
     @property
@@ -28,9 +28,6 @@ class KFoldLoop(Loop):
     def done(self) -> bool:
         return self.current_fold >= self.num_folds
 
-    def connect(self, fit_loop: FitLoop) -> None:
-        self.fit_loop = fit_loop
-
     def reset(self) -> None:
         """Nothing to reset in this loop."""
 
@@ -42,7 +39,7 @@ class KFoldLoop(Loop):
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         """Used to call `setup_fold_index` from the `BaseKFoldDataModule` instance."""
-        print(f"STARTING FOLD {self.current_fold}")
+        self.trainer.lightning_module.log('current_fold', float(self.current_fold))
         self.trainer.datamodule.setup_fold_index(self.current_fold)
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
@@ -56,8 +53,7 @@ class KFoldLoop(Loop):
         self.trainer.save_checkpoint(osp.join(self.export_path, f"model_fold_{self.current_fold}.pt"))
         # restore the original weights + optimizers and schedulers.
         self.trainer.lightning_module.load_state_dict(self.lightning_module_state_dict)
-        self.trainer.strategy.setup_optimizers(self.trainer)
-        self.replace(fit_loop = FitLoop)
+        self.trainer.accelerator.setup_optimizers(self.trainer)
 
     def on_save_checkpoint(self) -> Dict[str, int]:
         return {"current_fold": self.current_fold}
@@ -70,6 +66,7 @@ class KFoldLoop(Loop):
         self.trainer.reset_val_dataloader()
         self.trainer.state.fn = TrainerFn.FITTING
         self.trainer.training = True
+        self.fit_loop.epoch_progress.reset_on_run()
 
     def __getattr__(self, key) -> Any:
         # requires to be overridden as attributes of the wrapped loop are being accessed.

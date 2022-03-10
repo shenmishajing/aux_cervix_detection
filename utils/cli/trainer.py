@@ -18,7 +18,4 @@ class KFoldTrainer(Trainer):
     def __init__(self, num_folds: int = 5, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_folds = num_folds
-
-        internal_fit_loop = self.fit_loop
-        self.fit_loop = KFoldLoop(self.num_folds)
-        self.fit_loop.connect(internal_fit_loop)
+        self.fit_loop = KFoldLoop(self.num_folds, self.fit_loop)
