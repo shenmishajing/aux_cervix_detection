@@ -35,6 +35,7 @@ class LightningDataModule(_LightningDataModule):
                     break
 
         self.datasets = {}
+        self.dataset = None
 
     def _setup_dataset(self, split_name):
         self.datasets[split_name] = self._build_data_set(self.split_name_map[split_name])
@@ -51,6 +52,7 @@ class LightningDataModule(_LightningDataModule):
 
         for name in split_names:
             self._setup_dataset(name)
+        self.dataset = self.datasets[split_names[0]]
 
     def _dataloader(self, split_name, **kwargs):
         return self._build_data_loader(self.datasets[split_name], split = split_name, **kwargs)

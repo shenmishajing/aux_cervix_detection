@@ -59,10 +59,7 @@ class MMDetModelAdapter(LightningModule, ABC):
         self.get_dataset()
 
     def get_dataset(self):
-        for name in self.trainer.datamodule.SPLIT_NAMES:
-            if name in self.trainer.datamodule.datasets:
-                self.dataset = self.trainer.datamodule.datasets[name]
-                break
+        self.dataset = self.trainer.datamodule.dataset
 
     def update_metrics(self, preds, target):
         for metric in self.metrics:
