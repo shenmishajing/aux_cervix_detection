@@ -1,2 +1,2 @@
-from utils.cli.cli import CLI
+from .cli import *
 from .utils import *

@@ -1,11 +1,39 @@
 import copy
 import os
+import re
 from typing import Any, Dict, List
 
+import yaml
 from jsonargparse import Path, get_config_read_mode, set_loader
-from jsonargparse.loaders_dumpers import yaml_load
+from jsonargparse.loaders_dumpers import regex_curly_comma
 from jsonargparse.util import change_to_path_dir
 from pytorch_lightning.utilities.cli import LightningArgumentParser
+
+
+class DefaultLoader(yaml.FullLoader):
+    pass
+
+
+DefaultLoader.add_implicit_resolver(
+    u'tag:yaml.org,2002:float',
+    re.compile(u'''^(?:
+     [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+    |[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+    |\\.[0-9_]+(?:[eE][-+][0-9]+)?
+    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
+    |[-+]?\\.(?:inf|Inf|INF)
+    |\\.(?:nan|NaN|NAN))$''', re.X),
+    list(u'-+0123456789.'),
+)
+
+
+def yaml_load(stream):
+    value = yaml.load(stream, Loader = DefaultLoader)
+    if isinstance(value, dict) and all(v is None for v in value.values()):
+        keys = set(k for k in regex_curly_comma.split(stream) if k)
+        if len(keys) > 0 and keys == set(value.keys()):
+            value = stream
+    return value
 
 
 def deep_update(source, override):
