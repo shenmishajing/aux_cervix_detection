@@ -5,8 +5,6 @@ from typing import Any, Mapping, Sequence, Union
 import torch
 from mmcv.runner import BaseModule
 from pytorch_lightning import LightningModule as _LightningModule
-from pytorch_lightning.utilities import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from utils import optim
 
@@ -19,6 +17,7 @@ class LightningModule(_LightningModule, BaseModule, ABC):
                  optimizer_config = None,
                  *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.automatic_lr_schedule = True
         self.normalize_config = normalize_config
         self.batch_size = None
 
@@ -146,95 +145,6 @@ class LightningModule(_LightningModule, BaseModule, ABC):
         else:
             return optimizer_config['optimizer']
 
-    def _accumulated_batches_reached(self,
-                                     batch_idx: int) -> bool:
-        """Determine if accumulation will be finished by the end of the current batch."""
-        return (batch_idx + 1) % self.trainer.accumulate_grad_batches == 0
-
-    def _num_ready_batches_reached(self,
-                                   batch_idx: int) -> bool:
-        """Checks if we are in the last batch or if there are more batches to follow."""
-        epoch_finished_on_ready = (batch_idx + 1) == self.trainer.num_training_batches
-        return epoch_finished_on_ready
-
-    def _should_accumulate(self,
-                           batch_idx: int) -> bool:
-        """Checks if the optimizer step should be performed or gradients should be accumulated for the current
-        step."""
-        accumulation_done = self._accumulated_batches_reached(batch_idx)
-        # Lightning steps on the final batch
-        is_final_batch = self._num_ready_batches_reached(batch_idx)
-        # but the TTP might not
-        ttp_accumulates_on_final_batch = (
-                self.trainer.training_type_plugin.handles_gradient_accumulation or not is_final_batch
-        )
-        return not accumulation_done and ttp_accumulates_on_final_batch
-
-    def manual_lr_schedulers_step(self,
-                                  interval: str,
-                                  batch_idx: int = None,
-                                  update_plateau_schedulers: Union[bool, None] = None) -> None:
-        """updates the lr schedulers based on the given interval."""
-        if interval == "step" and self._should_accumulate(batch_idx):
-            return
-        self._manual_lr_schedulers_step(
-            interval = interval,
-            batch_idx = batch_idx,
-            update_plateau_schedulers = update_plateau_schedulers
-        )
-
-    def _manual_lr_schedulers_step(
-            self,
-            interval: str,
-            batch_idx: int,
-            update_plateau_schedulers: Union[bool, None] = None
-    ) -> None:
-        """Update learning rates.
-
-        Args:
-            interval: either 'epoch' or 'step'.
-            update_plateau_schedulers: control whether ``ReduceLROnPlateau`` or non-plateau schedulers get updated.
-                This is used so non-plateau schedulers can be updated before running validation. Checkpoints are
-                commonly saved during validation, however, on-plateau schedulers might monitor a validation metric
-                so they have to be updated separately.
-        """
-        if not self.trainer.lr_schedulers:
-            return
-
-        for lr_scheduler in self.trainer.lr_schedulers:
-            if update_plateau_schedulers is not None and update_plateau_schedulers ^ lr_scheduler["reduce_on_plateau"]:
-                continue
-
-            current_idx = batch_idx if interval == "step" else self.trainer.current_epoch
-            current_idx += 1  # account for both batch and epoch starts from 0
-            # Take step if call to update_learning_rates matches the interval key and
-            # the current step modulo the schedulers frequency is zero
-            if lr_scheduler["interval"] == interval and current_idx % lr_scheduler["frequency"] == 0:
-                if lr_scheduler["reduce_on_plateau"]:
-                    # If instance of ReduceLROnPlateau, we need a monitor
-                    monitor_key = lr_scheduler["monitor"]
-                    monitor_val = self.trainer.callback_metrics.get(monitor_key)
-                    if monitor_val is None:
-                        if lr_scheduler.get("strict", True):
-                            avail_metrics = list(self.trainer.callback_metrics)
-                            raise MisconfigurationException(
-                                f"ReduceLROnPlateau conditioned on metric {monitor_key}"
-                                f" which is not available. Available metrics are: {avail_metrics}."
-                                " Condition can be set using `monitor` key in lr scheduler dict"
-                            )
-                        rank_zero_warn(
-                            f"ReduceLROnPlateau conditioned on metric {monitor_key}"
-                            " which is not available but strict is set to `False`."
-                            " Skipping learning rate update.",
-                            RuntimeWarning,
-                        )
-                        continue
-
-                    # update LR
-                    lr_scheduler["scheduler"].step(monitor_val)
-                else:
-                    lr_scheduler["scheduler"].step()
-
     def _loss_step(self, batch, res, prefix = 'train'):
         raise NotImplementedError
 
@@ -267,10 +177,6 @@ class LightningModule(_LightningModule, BaseModule, ABC):
         loss = self.loss_step(batch, res, 'train')
         self.log_dict(loss)
         return loss['train/loss']
-
-    def training_epoch_end(self, outputs):
-        if not self.automatic_optimization:
-            self.manual_lr_schedulers_step('epoch')
 
     def validation_step(self, batch, *args, **kwargs):
         res = self(batch)

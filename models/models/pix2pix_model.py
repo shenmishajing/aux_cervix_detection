@@ -1,9 +1,11 @@
+import copy
 import os
 import shutil
+
 import cv2
-import copy
 import torch
 from torch import nn
+
 from .base import LightningModule
 
 
@@ -119,7 +121,6 @@ class Pix2PixModel(LightningModule):
         optimizer_D.step()  # update D_A and D_B's weights
 
         self.log_dict(loss)
-        self.manual_lr_schedulers_step('step', batch_idx = batch_idx)
         return loss['train/loss']
 
     def on_predict_start(self) -> None:
