@@ -1,9 +1,7 @@
 __base__: cataract_classification.yaml
 
 trainer:
-    class_path: utils.KFoldTrainer
-    init_args:
-        num_folds: 5
+    num_folds: 5
 
 data:
     class_path: datasets.KFoldMMDetDataSetAdapter

@@ -4,8 +4,7 @@ __base__:
     - ../models/GAN/pix2pix.yaml
 
 trainer:
-    init_args:
-        strategy: ddp
+    strategy: ddp
 
 data:
     init_args:

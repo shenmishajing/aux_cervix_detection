@@ -10,8 +10,7 @@ model:
                 weight: 0.0
 
 trainer:
-    init_args:
-        strategy: ddp
+    strategy: ddp
 
 data:
     init_args:

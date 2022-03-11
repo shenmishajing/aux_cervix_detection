@@ -14,5 +14,4 @@ model:
                     warmup_iters: 500
 
 trainer:
-    init_args:
-        max_epochs: 12
+    max_epochs: 12

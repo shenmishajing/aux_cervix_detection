@@ -4,8 +4,7 @@ __base__:
     - ../models/GAN/CycleGAN.yaml
 
 trainer:
-    init_args:
-        strategy: ddp
+    strategy: ddp
 
 data:
     init_args:
