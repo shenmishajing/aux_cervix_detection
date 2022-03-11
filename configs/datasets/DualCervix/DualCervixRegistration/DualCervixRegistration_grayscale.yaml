@@ -7,10 +7,11 @@ __import__:
 
 data:
     init_args:
-        pipeline:
-            acid:
-                insert_item:
-                    - [ 5, *import_gen_segmentation_from_bbox_transform ]
-            iodine:
-                insert_item:
-                    - [ 5, *import_gen_segmentation_from_bbox_transform ]
+        dataset_cfg:
+            pipeline:
+                acid:
+                    insert_item:
+                        - [ 5, *import_gen_segmentation_from_bbox_transform ]
+                iodine:
+                    insert_item:
+                        - [ 5, *import_gen_segmentation_from_bbox_transform ]
