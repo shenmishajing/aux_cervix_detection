@@ -4,7 +4,7 @@ __import__:
         color_type: color
 
     import_img_scale: &import_img_scale
-        size: !!python/tuple [ 1200, 1200 ]
+        size: !!python/tuple [ 224, 224 ]
     import_resize_transform: &import_resize_transform
         type: Resize
         <<: *import_img_scale
