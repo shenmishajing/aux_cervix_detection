@@ -1,4 +1,3 @@
-import copy
 import os
 import shutil
 
@@ -43,20 +42,8 @@ class Pix2PixModel(LightningModule):
         self.lambda_GAN = lambda_GAN
         self.lambda_D = lambda_D
 
-    def _construct_optimizers(self, optimizers):
-        """
-        Constructs all optimizers.
-
-        Args:
-            optimizers: list of dictionary containing optimizer configuration.
-        """
-        params = [self.netG.parameters(), self.netD.parameters()]
-        if len(optimizers) == 1:
-            optimizers = [copy.deepcopy(optimizers[0]) for _ in range(len(params))]
-        for i in range(len(optimizers)):
-            optimizers[i] = self._construct_optimizer(optimizers[i], set_lr = i == 0, params = params[i])
-
-        return optimizers
+    def configure_optimizer_parameters(self):
+        return [self.netG.parameters(), self.netD.parameters()]
 
     def forward(self, batch):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

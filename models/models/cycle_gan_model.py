@@ -1,4 +1,3 @@
-import copy
 import itertools
 import os
 import random
@@ -106,21 +105,9 @@ class CycleGANModel(LightningModule):
         self.fake_A_pool = ImagePool(pool_size)  # create image buffer to store previously generated images
         self.fake_B_pool = ImagePool(pool_size)  # create image buffer to store previously generated images
 
-    def _construct_optimizers(self, optimizers):
-        """
-        Constructs all optimizers.
-
-        Args:
-            optimizers: list of dictionary containing optimizer configuration.
-        """
-        params = [itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()),
-                  itertools.chain(self.netD_A.parameters(), self.netD_B.parameters())]
-        if len(optimizers) == 1:
-            optimizers = [copy.deepcopy(optimizers[0]) for _ in range(len(params))]
-        for i in range(len(optimizers)):
-            optimizers[i] = self._construct_optimizer(optimizers[i], set_lr = i == 0, params = params[i])
-
-        return optimizers
+    def configure_optimizer_parameters(self):
+        return [itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()),
+                itertools.chain(self.netD_A.parameters(), self.netD_B.parameters())]
 
     def forward(self, batch):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
