@@ -1,31 +1,19 @@
-__import__:
-    import_load_img_transform: &import_load_img_transform
-        type: LoadImageFromFile
-        color_type: color
-
-    import_img_scale: &import_img_scale
-        size: !!python/tuple [ 224, 224 ]
-    import_resize_transform: &import_resize_transform
-        type: Resize
-        <<: *import_img_scale
-
-    import_normalize_transform: &import_normalize_transform
-        type: Normalize
-        mean: [ 74.70364379882812, 77.83037567138672, 79.49059295654297 ]
-        std: [ 40.09847640991211, 36.859676361083984, 37.57963180541992 ]
-        to_rgb: true
-
 data:
     class_path: datasets.MMDetDataSetAdapter
     init_args:
         dataset_cfg:
             type: CataractDataSet
             pipeline:
-                -   <<: *import_load_img_transform
-                -   <<: *import_resize_transform
+                -   type: LoadImageFromFile
+                    color_type: color
+                -   type: Resize
+                    size: !!python/tuple [ 224, 224 ]
                 -   type: RandomFlip
                     flip_prob: 0.5
-                -   <<: *import_normalize_transform
+                -   type: Normalize
+                    mean: [ 74.70364379882812, 77.83037567138672, 79.49059295654297 ]
+                    std: [ 40.09847640991211, 36.859676361083984, 37.57963180541992 ]
+                    to_rgb: true
                 -   type: ImageToTensor
                     keys: [ img ]
                 -   type: ToTensor
