@@ -1,0 +1,41 @@
+__base__: cataract_classification.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            pipeline:
+                change_item:
+                    -   - -2
+                        -   type: ToTensor
+                            keys:
+                                - img_rotate
+                                - gt_label
+                                - gt_smooth_label
+                                - center_label
+                                - center_turbidity
+                                - center_pervade_turbidity
+                                - border_label
+                                - border_turbidity
+                                - border_pervade_turbidity
+                    -   - -1
+                        -   type: Collect
+                            keys:
+                                - img
+                                - img_rotate
+                                - gt_label
+                                - gt_smooth_label
+                                - center_label
+                                - center_turbidity
+                                - center_pervade_turbidity
+                                - border_label
+                                - border_turbidity
+                                - border_pervade_turbidity
+            labels:
+                - gt_label
+                - center_label
+                - center_turbidity
+                - center_pervade_turbidity
+                - border_label
+                - border_turbidity
+                - border_pervade_turbidity
+            ann_file: data/cataract/C_${split}_add_2.csv

@@ -25,26 +25,17 @@ data:
                         - img_rotate
                         - gt_label
                         - gt_smooth_label
-                        - center_label
-                        - center_turbidity
-                        - center_pervade_turbidity
-                        - border_label
-                        - border_turbidity
-                        - border_pervade_turbidity
                 -   type: Collect
                     keys:
                         - img
                         - img_rotate
                         - gt_label
                         - gt_smooth_label
-                        - center_label
-                        - center_turbidity
-                        - center_pervade_turbidity
-                        - border_label
-                        - border_turbidity
-                        - border_pervade_turbidity
             data_prefix: data/cataract/ROI/crop_region_t
-            ann_file: data/cataract/C_${split}_add_2.csv
+            ann_file: data/cataract/C_${split}_check.csv
+        split_name_map:
+            test: val
+            predict: val
         data_loader_config:
             batch_size: 32
             num_workers: 8
