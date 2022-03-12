@@ -6,6 +6,9 @@ data:
             pipeline:
                 -   type: LoadImageFromFile
                     color_type: color
+                -   type: GenSmoothLabel
+                    num_classes: 7
+                    pow: 2
                 -   type: Resize
                     size: !!python/tuple [ 224, 224 ]
                 -   type: RandomFlip
@@ -14,14 +17,26 @@ data:
                     mean: [ 74.70364379882812, 77.83037567138672, 79.49059295654297 ]
                     std: [ 40.09847640991211, 36.859676361083984, 37.57963180541992 ]
                     to_rgb: true
+                -   type: GenRotateImage
                 -   type: ImageToTensor
                     keys: [ img ]
                 -   type: ToTensor
-                    keys: [ gt_label ]
+                    keys:
+                        - img_rotate
+                        - gt_label
+                        - gt_smooth_label
+                        - center_label
+                        - center_turbidity
+                        - center_pervade_turbidity
+                        - border_label
+                        - border_turbidity
+                        - border_pervade_turbidity
                 -   type: Collect
                     keys:
                         - img
+                        - img_rotate
                         - gt_label
+                        - gt_smooth_label
                         - center_label
                         - center_turbidity
                         - center_pervade_turbidity

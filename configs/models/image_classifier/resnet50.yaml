@@ -2,7 +2,7 @@ model:
     class_path: models.models.mmclassifiers.MMClsModelAdapter
     init_args:
         model:
-            class_path: mmcls.models.classifiers.ImageClassifier
+            class_path: models.models.mmclassifiers.ImageClassifier
             init_args:
                 backbone:
                     type: ResNet

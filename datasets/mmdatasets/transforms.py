@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
+from mmcls.datasets.builder import PIPELINES as MMCLS_PIPELINES
 from mmcv.parallel import DataContainer as DC
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import DefaultFormatBundle as _DefaultFormatBundle
@@ -54,6 +55,71 @@ class GenSegmentationFromBBox:
     def __repr__(self):
         repr_str = self.__class__.__name__
         repr_str += f'(num_classes={self.num_classes})'
+        return repr_str
+
+
+@MMCLS_PIPELINES.register_module()
+@PIPELINES.register_module()
+class GenSmoothLabel:
+    """Generate smooth label.
+
+    Added key is "gt_smooth_label".
+
+    Args:
+        num_classes (int): number of classes. Generate instance segmentation,
+            if is None, else semantic segmentation. Default : None.
+    """
+
+    def __init__(self, num_classes = None, pow = 1):
+        self.num_classes = num_classes
+        self.pow = pow
+
+    def __call__(self, results):
+        """Call function to generate segmentation.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Segmentation generated results, 'gt_segments_from_bboxes' key
+                is added into result dict.
+        """
+        gt_smooth_label = np.exp(-np.power(np.abs(np.arange(self.num_classes) - results['gt_label']), self.pow))
+        gt_smooth_label /= np.sum(gt_smooth_label)
+        results['gt_smooth_label'] = gt_smooth_label
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_classes={self.num_classes})'
+        return repr_str
+
+
+@MMCLS_PIPELINES.register_module()
+@PIPELINES.register_module()
+class GenRotateImage:
+    """Generate rotated image.
+
+    Added key is "img_rotate".
+    """
+
+    def __call__(self, results):
+        """Call function to generate segmentation.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Segmentation generated results, 'gt_segments_from_bboxes' key
+                is added into result dict.
+        """
+        img_rotate = [results['img'], np.rot90(results['img']), np.rot90(results['img'], 2), np.rot90(results['img'], -1)]
+        results['img_rotate'] = np.stack(img_rotate).transpose(0, 3, 1, 2)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'()'
         return repr_str
 
 

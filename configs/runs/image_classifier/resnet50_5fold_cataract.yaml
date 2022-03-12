@@ -1,0 +1,3 @@
+__base__:
+    - resnet50_cataract.yaml
+    - ../../datasets/cataract/cataract_kfold_classification.yaml
