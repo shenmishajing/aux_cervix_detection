@@ -1,10 +1,13 @@
 import copy
+import json
 import os
 import re
-from typing import Any, Dict, List
+from typing import Any, List, Optional
+from typing import Dict
 
 import yaml
 from jsonargparse import Path, get_config_read_mode, set_loader
+from jsonargparse.actions import Action, FilesCompleterMethod, _ActionSubCommands
 from jsonargparse.loaders_dumpers import regex_curly_comma
 from jsonargparse.util import change_to_path_dir
 from pytorch_lightning.utilities.cli import LightningArgumentParser
@@ -197,6 +200,48 @@ def yaml_with_merge_load(stream, path = None, ext_vars = None):
 set_loader('yaml_with_merge', yaml_with_merge_load)
 
 
+class ActionJsonFile(Action, FilesCompleterMethod):
+    """Action to indicate that an argument is a configuration file or a configuration string in json format."""
+
+    def __init__(self, **kwargs):
+        """Initializer for ActionJsonFile instance."""
+        if 'default' in kwargs:
+            raise ValueError('default not allowed for ActionJsonFile, use default_config_files.')
+        opt_name = kwargs['option_strings']
+        opt_name = opt_name[0] if len(opt_name) == 1 else [x for x in opt_name if x[0:2] == '--'][0]
+        if '.' in opt_name:
+            raise ValueError('ActionJsonFile must be a top level option.')
+        if 'help' not in kwargs:
+            kwargs['help'] = 'Path to a configuration file in json format or a configuration string in json format.'
+        super().__init__(**kwargs)
+
+    def __call__(self, parser, cfg, values, option_string = None):
+        """Parses the given configuration and adds all the corresponding keys to the namespace.
+
+        Raises:
+            TypeError: If there are problems parsing the configuration.
+        """
+        self.apply_config(parser, cfg, self.dest, values)
+
+    @staticmethod
+    def apply_config(parser, cfg, dest, value) -> None:
+        with _ActionSubCommands.not_single_subcommand():
+            try:
+                cfg_path: Optional[Path] = Path(value, mode = get_config_read_mode())
+                value = cfg_path.get_content()
+            except TypeError:
+                pass
+            cfg_file = json.loads(value)
+            for key, value in cfg_file.items():
+                *prefix_keys, last_key = key.split('.')
+                cur_cfg = cfg
+                for prefix_key in prefix_keys:
+                    if prefix_key and prefix_key in cur_cfg:
+                        cur_cfg = cur_cfg[prefix_key]
+                cur_cfg[last_key] = value
+
+
 class ArgumentParser(LightningArgumentParser):
     def __init__(self, parser_mode: str = 'yaml_with_merge', *args: Any, **kwargs: Any) -> None:
         super().__init__(parser_mode = parser_mode, *args, **kwargs)
+        self.add_argument("--json", action = ActionJsonFile)
