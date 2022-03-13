@@ -41,3 +41,12 @@ data:
             num_workers: 8
             prefetch_factor: 2
             pin_memory: true
+
+trainer:
+    callbacks:
+        change_item:
+            -   - -1
+                -   init_args:
+                        monitor: val/Accuracy
+                        filename: 'epoch:{epoch}-val_acc:{val/Accuracy:.4g}'
+                        mode: max
