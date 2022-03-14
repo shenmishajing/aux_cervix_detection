@@ -1,0 +1,5 @@
+__base__: ../../runs/image_classifier/resnet50_cataract.yaml
+
+trainer:
+    callbacks:
+        __delete__: -1

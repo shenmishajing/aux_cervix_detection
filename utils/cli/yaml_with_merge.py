@@ -2,8 +2,7 @@ import copy
 import json
 import os
 import re
-from typing import Any, List, Optional
-from typing import Dict
+from typing import Any, Dict, List, Optional
 
 import yaml
 from jsonargparse import Path, get_config_read_mode, set_loader
@@ -233,11 +232,15 @@ class ActionJsonFile(Action, FilesCompleterMethod):
                 pass
             cfg_file = json.loads(value)
             for key, value in cfg_file.items():
-                *prefix_keys, last_key = key.split('.')
+                *prefix_keys, last_key = key.split('/')
                 cur_cfg = cfg
                 for prefix_key in prefix_keys:
-                    if prefix_key and prefix_key in cur_cfg:
+                    if prefix_key:
+                        if isinstance(cur_cfg, List):
+                            prefix_key = int(prefix_key)
                         cur_cfg = cur_cfg[prefix_key]
+                if isinstance(cur_cfg, List):
+                    last_key = int(last_key)
                 cur_cfg[last_key] = value
 
 

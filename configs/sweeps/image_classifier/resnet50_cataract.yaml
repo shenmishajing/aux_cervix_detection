@@ -1,0 +1,36 @@
+project: cataract_classification
+name: resnet50_cataract
+method: bayes
+metric:
+    goal: maximize
+    name: val/Accuracy
+early_terminate:
+    type: hyperband
+    min_iter: 10
+    eta: 3
+parameters:
+    model/init_args/model/init_args/backbone/frozen_stages:
+        distribution: int_uniform
+        min: 0
+        max: 3
+    optimizer_config/optimizer/class_path:
+        distribution: categorical
+        values: [ torch.optim.SGD, torch.optim.Adam ]
+    optimizer_config/optimizer/init_args/lr:
+        distribution: log_uniform
+        min: -10
+        max: -5
+    optimizer_config/optimizer/init_args/weight_decay:
+        distribution: log_uniform
+        min: -12
+        max: 0
+program: tools/cli.py
+command:
+    - ${env}
+    - ${interpreter}
+    - ${program}
+    - "fit"
+    - "--config"
+    - "configs/sweeps/image_classifier/resnet50_cataract_sweep.yaml"
+    - "--json"
+    - ${args_json_file}
