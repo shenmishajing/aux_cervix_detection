@@ -1,5 +1,6 @@
 __base__: ../../runs/image_classifier/resnet50_cataract.yaml
 
 trainer:
+    enable_checkpointing: false
     callbacks:
         __delete__: -1
