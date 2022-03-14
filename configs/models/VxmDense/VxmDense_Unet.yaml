@@ -31,18 +31,21 @@ model:
                 module:
                     class_path: models.losses.losses.Dice
                 weight: 1.0
-        optimizer_config:
-            optimizer:
-                type: AdamW
-                lr: 1.0e-3
-                weight_decay: 0.01
-            lr_scheduler:
-                scheduler:
-                    type: ReduceLROnPlateau
-                    mode: min
-                    factor: 0.1
-                    patience: 5
-                    cooldown: 2
-                monitor: train/loss
-                warmup_config:
-                    warmup_iters: 500
+
+optimizer_config:
+    optimizer:
+        class_path: torch.optim.AdamW
+        init_args:
+            lr: 1.0e-3
+            weight_decay: 0.01
+    lr_scheduler:
+        scheduler:
+            class_path: torch.optim.lr_scheduler.ReduceLROnPlateau
+            init_args:
+                mode: min
+                factor: 0.1
+                patience: 5
+                cooldown: 2
+            monitor: train/loss
+        warmup_config:
+            warmup_iters: 500

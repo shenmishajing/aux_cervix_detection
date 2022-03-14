@@ -1,11 +1,10 @@
 __base__: schedule_1x.yaml
 
-model:
-    init_args:
-        optimizer_config:
-            lr_scheduler:
-                scheduler:
-                    milestones: [ 16, 22 ]
+optimizer_config:
+    lr_scheduler:
+        scheduler:
+            init_args:
+                milestones: [ 16, 22 ]
 
 trainer:
     max_epochs: 24
