@@ -1,6 +1,7 @@
 __base__:
-    - resnet50_cataract.yaml
-    - ../../models/image_classifier/label_cataract.yaml
+    - ../../default_runtime.yaml
+    - ../../models/image_classifier/label_classifier.yaml
+    - ../../datasets/cataract/cataract_classification.yaml
 
 model:
     init_args:
@@ -11,3 +12,26 @@ model:
                     in_channels: 6
                     mid_channels: [ 128 ]
                     dropout_rate: 0.2
+
+optimizer_config:
+    optimizer:
+        class_path: torch.optim.SGD
+        init_args:
+            lr: 1e-2
+    lr_scheduler:
+        scheduler:
+            class_path: torch.optim.lr_scheduler.MultiStepLR
+            init_args:
+                milestones: [ 12, 24, 36 ]
+        warmup_config:
+            warmup_iters: 50
+
+trainer:
+    max_epochs: 40
+
+data:
+    init_args:
+        data_loader_config:
+            batch_size: 16
+            num_workers: 8
+            prefetch_factor: 2
