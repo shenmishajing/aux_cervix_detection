@@ -9,17 +9,15 @@ from mmdet.datasets import DATASETS
 class CataractDataSet(BaseDataset):
     CLASSES = [str(i) for i in range(7)]
 
-    def __init__(self, labels = None, *args, **kwargs):
-        if labels is None:
-            labels = ['gt_label']
-        self.labels = labels
-        super().__init__(*args, **kwargs)
-
     def load_annotations(self):
         data_infos = []
         for line in csv.reader(open(self.ann_file)):
-            info = {'img_prefix': self.data_prefix, 'img_info': {'filename': line[0]}}
-            for i, name in enumerate(self.labels):
-                info[name] = np.array(int(line[i + 1]), dtype = np.long)
+            info = {
+                'img_prefix': self.data_prefix,
+                'img_info': {'filename': line[0]},
+                'gt_label': np.array(line[1], dtype = np.int64)
+            }
+            if len(line) > 2:
+                info['label'] = np.array(line[2:], dtype = np.float32)
             data_infos.append(info)
         return data_infos
