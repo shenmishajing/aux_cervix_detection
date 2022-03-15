@@ -28,7 +28,7 @@ trainer:
             init_args:
                 logging_interval: null
                 log_momentum: false
-                name_prefix: lr/
+                name_prefix: null
         -   class_path: utils.callbacks.model_checkpoint.ModelCheckpointWithLinkBest
             init_args:
                 monitor: val/loss
