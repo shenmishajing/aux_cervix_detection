@@ -1,0 +1,13 @@
+__base__:
+    - resnet50_cataract.yaml
+    - ../../models/image_classifier/label_cataract.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                head:
+                    num_classes: 7
+                    in_channels: 6
+                    mid_channels: [ 128 ]
+                    dropout_rate: 0.2
