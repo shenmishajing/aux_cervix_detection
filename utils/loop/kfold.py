@@ -39,7 +39,7 @@ class KFoldLoop(Loop):
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         """Used to call `setup_fold_index` from the `BaseKFoldDataModule` instance."""
-        self.trainer.lightning_module.log('current_fold', float(self.current_fold))
+        self.trainer.logger.log_metrics({'current_fold': self.current_fold}, step = self.trainer.global_step)
         self.trainer.datamodule.setup_fold_index(self.current_fold)
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
