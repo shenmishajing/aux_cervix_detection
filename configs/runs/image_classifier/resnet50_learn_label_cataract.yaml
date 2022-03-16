@@ -1,0 +1,13 @@
+__base__:
+    - resnet50_cataract.yaml
+    - ../../models/image_classifier/resnet50_learn_label.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                img_out_channels: 256
+                label_out_channels: 256
+                head:
+                    num_classes: 7
+                    in_channels: 512
