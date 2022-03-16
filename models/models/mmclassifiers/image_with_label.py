@@ -36,7 +36,7 @@ class ImageWithLabelClassifier(ImageClassifier):
         if isinstance(x, tuple):
             x = x[-1]
         x = self.img_fc(x)
-        label = self.label_fc(label)
+        label = self.label_fc(label.to(torch.float))
         x = torch.cat((x, label), dim = 1)
 
         losses = dict()
@@ -52,7 +52,7 @@ class ImageWithLabelClassifier(ImageClassifier):
         if isinstance(x, tuple):
             x = x[-1]
         x = self.img_fc(x)
-        label = self.label_fc(label)
+        label = self.label_fc(label.to(torch.float))
         x = torch.cat((x, label), dim = 1)
 
         res = self.head.simple_test(x, **kwargs)

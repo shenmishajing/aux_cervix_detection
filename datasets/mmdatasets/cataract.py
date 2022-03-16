@@ -18,6 +18,6 @@ class CataractDataSet(BaseDataset):
                 'gt_label': np.array(line[1], dtype = np.int64)
             }
             if len(line) > 2:
-                info['label'] = np.array(line[2:], dtype = np.float32)
+                info['label'] = np.array(line[2:], dtype = np.int64)
             data_infos.append(info)
         return data_infos
