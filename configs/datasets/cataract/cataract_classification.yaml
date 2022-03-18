@@ -34,7 +34,7 @@ data:
                         - gt_label
                         - gt_smooth_label
             data_prefix: data/cataract/ROI/crop_region_t
-            ann_file: data/cataract/C_${split}_add_2.csv
+            ann_file: data/cataract/${split}.csv
         split_name_map:
             test: val
             predict: val
