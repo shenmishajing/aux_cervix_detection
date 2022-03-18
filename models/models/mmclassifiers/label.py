@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import torch
 from mmcls.models import BaseClassifier, build_head
 
 
@@ -21,7 +22,7 @@ class LabelClassifier(BaseClassifier):
             dict[str, Tensor]: a dictionary of loss components
         """
         losses = dict()
-        loss = self.head.forward_train(label, gt_label)
+        loss = self.head.forward_train(label.to(torch.float), gt_label)
 
         losses.update(loss)
 
@@ -29,7 +30,7 @@ class LabelClassifier(BaseClassifier):
 
     def simple_test(self, *args, label, **kwargs):
         """Test without augmentation."""
-        res = self.head.simple_test(label, **kwargs)
+        res = self.head.simple_test(label.to(torch.float), **kwargs)
 
         return res
 
