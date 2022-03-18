@@ -17,10 +17,12 @@ class ImageLearnLabelClassifier(ImageClassifier):
                  label_out_channels = 1024,
                  label_configs = None,
                  label_loss = dict(type = 'CrossEntropyLoss', loss_weight = 1.0),
+                 label_feat_use_expectation = False,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
         self.center_pool_size = center_pool_size
+        self.label_feat_use_expectation = label_feat_use_expectation
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.avg_pool = nn.AdaptiveAvgPool2d(pool_size)
 
@@ -33,7 +35,8 @@ class ImageLearnLabelClassifier(ImageClassifier):
             loss_cfg.update(cfg.get('loss', {}))
             self.label_loss.append(build_loss(loss_cfg))
 
-        self.label_fc = nn.Linear(len(label_configs), label_out_channels)
+        label_fc_in_channels = len(label_configs) if label_feat_use_expectation else sum([c['num_classes'] for c in label_configs])
+        self.label_fc = nn.Linear(label_fc_in_channels, label_out_channels)
         self.img_fc = nn.Linear(in_channels, img_out_channels)
 
     def label_forward(self, x):
@@ -52,11 +55,15 @@ class ImageLearnLabelClassifier(ImageClassifier):
 
     def feature_forward(self, x):
         pred_label = self.label_forward(x)
-        label_feat = []
-        for p in pred_label:
-            label_index = torch.arange(p.shape[1], device = p.device, dtype = p.dtype)
-            label_feat.append(torch.sum(nn.functional.softmax(p) * label_index, dim = 1))
-        label_feat = self.label_fc(torch.stack(label_feat, dim = -1))
+        if self.label_feat_use_expectation:
+            label_feat = []
+            for p in pred_label:
+                label_index = torch.arange(p.shape[1], device = p.device, dtype = p.dtype)
+                label_feat.append(torch.sum(torch.softmax(p, dim = 1) * label_index[None, :], dim = 1))
+            label_feat = torch.stack(label_feat, dim = -1)
+        else:
+            label_feat = torch.cat(pred_label, dim = 1)
+        label_feat = self.label_fc(label_feat)
         img_feat = self.global_pool(x).squeeze()
         img_feat = self.img_fc(img_feat)
         x = torch.cat((img_feat, label_feat), dim = 1)
