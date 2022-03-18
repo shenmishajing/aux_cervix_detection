@@ -1,10 +1,45 @@
+import os
 from typing import Dict, Optional
 
-from pytorch_lightning.loggers.wandb import WandbLogger
-from pytorch_lightning.utilities import rank_zero_only
+from pytorch_lightning.loggers.base import rank_zero_experiment
+from pytorch_lightning.loggers.wandb import Run, WandbLogger, wandb
+from pytorch_lightning.utilities import rank_zero_only, rank_zero_warn
 
 
 class WandbNamedLogger(WandbLogger):
+    @property
+    @rank_zero_experiment
+    def experiment(self) -> Run:
+        r"""
+
+        Actual wandb object. To use wandb features in your
+        :class:`~pytorch_lightning.core.lightning.LightningModule` do the following.
+
+        Example::
+
+        .. code-block:: python
+
+            self.logger.experiment.some_wandb_function()
+
+        """
+        if self._experiment is None:
+            if self._offline:
+                os.environ["WANDB_MODE"] = "dryrun"
+            if wandb.run is None:
+                self._experiment = wandb.init(**self._wandb_init)
+            else:
+                rank_zero_warn(
+                    "There is a wandb run already in progress and newly created instances of `WandbLogger` will reuse"
+                    " this run. If this is not desired, call `wandb.finish()` before instantiating `WandbLogger`."
+                )
+                self._experiment = wandb.run
+
+        # define default x-axis (for latest wandb versions)
+        if getattr(self._experiment, "define_metric", None):
+            self._experiment.define_metric("global_step")
+            self._experiment.define_metric("*", step_metric = "global_step", step_sync = True)
+
+        return self._experiment
 
     @property
     def name(self) -> Optional[str]:
