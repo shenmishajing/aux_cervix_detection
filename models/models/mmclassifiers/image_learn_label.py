@@ -88,7 +88,6 @@ class ImageLearnLabelClassifier(ImageClassifier):
         losses = dict()
         losses['loss_label'] = torch.mean(torch.stack(loss_label))
         losses['loss_cls'] = self.head.forward_train(x, gt_label, **kwargs)['loss']
-        losses['loss'] = torch.sum(torch.stack(list(losses.values())))
         return losses
 
     def simple_test(self, img, img_metas = None, **kwargs):

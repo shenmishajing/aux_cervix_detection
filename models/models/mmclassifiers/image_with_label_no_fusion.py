@@ -48,7 +48,6 @@ class ImageWithLabelNoFusionClassifier(ImageWithLabelClassifier):
         losses = dict()
         losses['loss_cls'] = self.head.forward_train(x, gt_label, **kwargs)['loss']
         losses['loss_label'] = self.label_head.forward_train(label, gt_label, **kwargs)['loss']
-        losses['loss'] = torch.sum(torch.stack(list(losses.values())))
 
         return losses
 
