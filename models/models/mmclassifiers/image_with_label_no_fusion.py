@@ -41,11 +41,13 @@ class ImageWithLabelNoFusionClassifier(ImageWithLabelClassifier):
             x = x[-1]
         x = self.img_fc(x)
         label = self.label_fc(label.to(x.dtype))
+
+        losses = dict()
         if self.use_attention:
             attention = torch.sigmoid(self.attention(torch.cat((x, label), dim = 1)))
             x = x * attention
             label = label * (1 - attention)
-        losses = dict()
+            losses['img_attention'] = attention.mean()
         losses['loss_cls'] = self.head.forward_train(x, gt_label, **kwargs)['loss']
         losses['loss_label'] = self.label_head.forward_train(label, gt_label, **kwargs)['loss']
 
