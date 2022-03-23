@@ -166,7 +166,7 @@ def parse_path(cfg_path, seen_cfg = None, **kwargs):
     cfg_file = get_cfg_from_path(cfg_path)
     seen_cfg[abs_cfg_path] = None
     cfg_file = parse_config(cfg_file, cfg_path = cfg_path, seen_cfg = seen_cfg, **kwargs)
-    seen_cfg[abs_cfg_path] = cfg_file
+    seen_cfg[abs_cfg_path] = copy.deepcopy(cfg_file)
     return cfg_file
 
 
