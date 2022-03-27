@@ -15,9 +15,11 @@ class CataractDataSet(BaseDataset):
             info = {
                 'img_prefix': self.data_prefix,
                 'img_info': {'filename': line[0]},
-                'gt_label': np.array(line[1], dtype = np.int64)
+                'gt_label': np.array(line[1], dtype = np.int64),
+                'gt_min_label': np.array(line[2], dtype = np.int64),
+                'gt_max_label': np.array(line[3], dtype = np.int64)
             }
-            if len(line) > 2:
-                info['label'] = np.array(line[2:], dtype = np.int64)
+            if len(line) > 4:
+                info['label'] = np.array(line[4:], dtype = np.int64)
             data_infos.append(info)
         return data_infos

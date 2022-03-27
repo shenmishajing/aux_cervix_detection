@@ -97,6 +97,42 @@ class GenSmoothLabel:
 
 @MMCLS_PIPELINES.register_module()
 @PIPELINES.register_module()
+class GenDimlyLabel:
+    """Generate Dimly label.
+
+    Added key is "gt_dimly_label".
+
+    Args:
+        num_classes (int): number of classes. Generate instance segmentation,
+            if is None, else semantic segmentation. Default : None.
+    """
+
+    def __init__(self, num_classes = None):
+        self.num_classes = num_classes
+
+    def __call__(self, results):
+        """Call function to generate segmentation.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+
+        Returns:
+            dict: Segmentation generated results, 'gt_segments_from_bboxes' key
+                is added into result dict.
+        """
+        gt_dimly_label = np.zeros(self.num_classes, dtype = np.int64)
+        gt_dimly_label[results['gt_min_label']:results['gt_max_label'] + 1] = 1
+        results['gt_dimly_label'] = gt_dimly_label
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(num_classes={self.num_classes})'
+        return repr_str
+
+
+@MMCLS_PIPELINES.register_module()
+@PIPELINES.register_module()
 class GenRotateImage:
     """Generate rotated image.
 

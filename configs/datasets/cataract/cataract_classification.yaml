@@ -9,6 +9,8 @@ data:
                 -   type: GenSmoothLabel
                     num_classes: 7
                     pow: 2
+                -   type: GenDimlyLabel
+                    num_classes: 7
                 -   type: Resize
                     size: !!python/tuple [ 224, 224 ]
                 -   type: RandomFlip
@@ -26,6 +28,7 @@ data:
                         - label
                         - gt_label
                         - gt_smooth_label
+                        - gt_dimly_label
                 -   type: Collect
                     keys:
                         - img
@@ -33,6 +36,7 @@ data:
                         - label
                         - gt_label
                         - gt_smooth_label
+                        - gt_dimly_label
             data_prefix: data/cataract/ROI/crop_region_t
             ann_file: data/cataract/${split}.csv
         split_name_map:
