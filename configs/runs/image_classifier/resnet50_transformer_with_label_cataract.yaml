@@ -1,0 +1,15 @@
+__base__:
+    - resnet50_cataract.yaml
+    - ../../models/image_classifier/resnet50_transformer_with_label.yaml
+
+model:
+    init_args:
+        model:
+            class_path: models.models.mmclassifiers.ImageTransformerWithLabelClassifier
+            init_args:
+                num_labels: 6
+                fusion_transformer_cfg:
+                    transformer_cfg:
+                        num_patches: 7
+                head:
+                    num_classes: 7

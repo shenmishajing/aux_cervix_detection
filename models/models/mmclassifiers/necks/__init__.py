@@ -1,0 +1,1 @@
+from .aap import AdaptiveAveragePooling
