@@ -67,7 +67,7 @@ trainer:
     # speed up
     precision: 32
     auto_lr_find: false
-    detect_anomaly: true
+    detect_anomaly: false
     auto_scale_batch_size: false
     accumulate_grad_batches: null
     profiler: null
