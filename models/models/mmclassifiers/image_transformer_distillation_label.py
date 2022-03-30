@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-
 import torch
 from mmcls.models import build_loss
 from torch import nn
 
+from .image_transformer import ImageTransformerClassifier
 from .image_transformer_with_label import ImageTransformerWithLabelClassifier
 
 
@@ -17,23 +17,20 @@ class ImageTransformerDistillationLabelTeacherClassifier(ImageTransformerWithLab
         return self.extract_cls_token(tokens)
 
 
-class ImageTransformerDistillationLabelClassifier(ImageTransformerWithLabelClassifier):
+class ImageTransformerDistillationLabelClassifier(ImageTransformerClassifier):
     def __init__(self,
                  teacher_classifier: nn.Module = None,
                  distillation_loss = None,
-                 num_labels = 0,
                  *args, **kwargs):
-        super().__init__(num_labels = 0, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.teacher_classifier = teacher_classifier
-        if self.teacher_classifier.init_cfg is not None:
+        self.train_teacher = self.teacher_classifier.init_cfg is None
+        if not self.train_teacher:
             for p in self.teacher_classifier.parameters():
                 p.requires_grad = False
 
         if distillation_loss is not None:
             self.distillation_loss = build_loss(distillation_loss)
-
-    def token_forward(self, x, label):
-        return self.fusion_transformer(self.extract_img_token(x))
 
     def forward_train(self, img, label, gt_label, **kwargs):
         """Forward computation during training.
@@ -63,4 +60,6 @@ class ImageTransformerDistillationLabelClassifier(ImageTransformerWithLabelClass
         losses['loss_cls'] = self.head.forward_train(cls_token[-1], gt_label, **kwargs)['loss']
         losses['loss_distillation'] = torch.mean(
             torch.stack([self.distillation_loss(t, d) for t, d in zip(cls_token, distillation_cls_token)]))
+        if self.train_teacher:
+            losses['loss_teacher'] = self.teacher_classifier.forward_train(img, label, gt_label, **kwargs)['loss']
         return losses

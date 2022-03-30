@@ -1,17 +1,6 @@
-__base__: resnet50.yaml
+__base__: resnet50_transformer.yaml
 
 model:
     init_args:
         model:
-            class_path: models.models.mmclassifiers.ImageTransformerDistillationLabelTeacherClassifier
-            init_args:
-                neck:
-                    type: AdaptiveAveragePooling
-                    pool_size: [ 3, 3 ]
-                in_channels: 512
-                head:
-                    in_channels: 384
-                fusion_transformer_cfg:
-                    num_transformer: 2
-                    transformer_cfg:
-                        arch: deit-t
+            class_path: models.models.mmclassifiers.ImageTransformerWithLabelClassifier

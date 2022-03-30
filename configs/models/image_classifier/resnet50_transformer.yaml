@@ -1,0 +1,18 @@
+__base__: resnet50.yaml
+
+model:
+    init_args:
+        model:
+            class_path: models.models.mmclassifiers.ImageTransformerClassifier
+            init_args:
+                in_channels: 512
+                neck:
+                    type: AdaptiveAveragePooling
+                    pool_size: [ 3, 3 ]
+                head:
+                    in_channels: 384
+                fusion_transformer_cfg:
+                    num_transformer: 2
+                    transformer_cfg:
+                        arch: deit-t
+                        num_patches: 4
