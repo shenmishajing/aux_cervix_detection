@@ -9,6 +9,12 @@ from mmdet.datasets import DATASETS
 class CataractDataSet(BaseDataset):
     CLASSES = [str(i) for i in range(7)]
 
+    def __init__(self,
+                 label_indices = None,
+                 *args, **kwargs):
+        self.label_indices = label_indices
+        super().__init__(*args, **kwargs)
+
     def load_annotations(self):
         data_infos = []
         for line in csv.reader(open(self.ann_file)):
@@ -20,6 +26,10 @@ class CataractDataSet(BaseDataset):
                 'gt_max_label': np.array(line[3], dtype = np.int64)
             }
             if len(line) > 4:
-                info['label'] = np.array(line[4:], dtype = np.int64)
+                if self.label_indices is None:
+                    info['label'] = np.array(line[4:], dtype = np.float32)
+                else:
+                    label = [line[4 + i] for i in self.label_indices]
+                    info['label'] = np.array(label, dtype = np.int64)
             data_infos.append(info)
         return data_infos
