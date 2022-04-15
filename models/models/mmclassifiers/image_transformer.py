@@ -139,6 +139,7 @@ class ImageTransformerClassifier(ImageClassifier):
     def __init__(self,
                  center_size = 1,
                  in_channels = 512,
+                 num_img_token = 4,
                  fusion_transformer_cfg = None,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -149,16 +150,22 @@ class ImageTransformerClassifier(ImageClassifier):
         assert self.num_transformer in [1, 2], 'ImageTransformerWithLabelClassifier only support one or two transformers'
 
         self.center_size = center_size
+        self.num_img_token = num_img_token
         self.img_fcs = nn.ModuleList([nn.Linear(in_channels, self.embed_dims) for _ in range(self.num_transformer)])
 
-    def extract_img_token(self, x):
-        img_token = x.view(x.shape[0], 4, -1, *x.shape[2:])
+    def extract_center_round_feat(self, x):
         pool_size = x.shape[-1]
-        center_img_token = img_token[..., (pool_size - self.center_size) // 2:(pool_size + self.center_size) // 2,
-                           (pool_size - self.center_size) // 2:(pool_size + self.center_size) // 2]
-        center_img_token = torch.mean(center_img_token, dim = [-2, -1])
-        round_img_token = (torch.sum(img_token, dim = [-2, -1]) - center_img_token * self.center_size ** 2) / (
+        center_feat = x[..., (pool_size - self.center_size) // 2:(pool_size + self.center_size) // 2,
+                      (pool_size - self.center_size) // 2:(pool_size + self.center_size) // 2]
+        center_feat = torch.mean(center_feat, dim = [-2, -1])
+        round_feat = (torch.sum(x, dim = [-2, -1]) - center_feat * self.center_size ** 2) / (
                 pool_size ** 2 - self.center_size ** 2)
+
+        return center_feat, round_feat
+
+    def extract_img_token(self, x):
+        img_token = x.view(x.shape[0], self.num_img_token, -1, *x.shape[2:])
+        center_img_token, round_img_token = self.extract_center_round_feat(img_token)
 
         if self.num_transformer == 2:
             img_token = [center_img_token, round_img_token]
@@ -173,7 +180,7 @@ class ImageTransformerClassifier(ImageClassifier):
     def extract_cls_token(tokens):
         return [torch.cat([t[:, 0] for t in token], dim = -1) for token in tokens]
 
-    def token_forward(self, x):
+    def token_forward(self, x, label = None):
         return self.fusion_transformer(self.extract_img_token(x))
 
     def forward_train(self, img, gt_label, **kwargs):
