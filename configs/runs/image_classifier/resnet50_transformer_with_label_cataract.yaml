@@ -5,7 +5,6 @@ __base__:
 model:
     init_args:
         model:
-            class_path: models.models.mmclassifiers.ImageTransformerWithLabelClassifier
             init_args:
                 num_labels: 6
                 fusion_transformer_cfg:
