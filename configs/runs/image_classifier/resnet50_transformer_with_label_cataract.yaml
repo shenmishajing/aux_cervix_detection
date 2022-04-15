@@ -6,9 +6,9 @@ model:
     init_args:
         model:
             init_args:
-                num_labels: 6
+                num_labels: 4
                 fusion_transformer_cfg:
                     transformer_cfg:
-                        num_patches: 7
+                        num_patches: 6
                 head:
                     num_classes: 7

@@ -39,6 +39,7 @@ data:
                         - gt_dimly_label
             data_prefix: data/cataract/ROI/crop_region_t
             ann_file: data/cataract/${split}.csv
+            label_indices: [ 0, 2, 3, 5 ]
         split_name_map:
             test: val
             predict: val
