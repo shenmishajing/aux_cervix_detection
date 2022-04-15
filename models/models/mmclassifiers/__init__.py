@@ -12,6 +12,7 @@ from .image_transformer_with_label import ImageTransformerWithLabelClassifier
 from .image_with_label import ImageWithLabelClassifier
 from .image_with_label_no_fusion import ImageWithLabelNoFusionClassifier
 from .label import LabelClassifier
+from .label_transformer import LabelTransformerClassifier
 from .losses import *
 from .mmcls_adapter import MMClsModelAdapter
 from .necks import *
