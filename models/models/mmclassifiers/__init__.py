@@ -7,6 +7,7 @@ from .image_rotate import RotateImageClassifier
 from .image_transformer import ImageTransformerClassifier
 from .image_transformer_distillation_label import ImageTransformerDistillationLabelClassifier, \
     ImageTransformerDistillationLabelTeacherClassifier
+from .image_transformer_learn_label import ImageTransformerLearnLabelClassifier
 from .image_transformer_with_label import ImageTransformerWithLabelClassifier
 from .image_with_label import ImageWithLabelClassifier
 from .image_with_label_no_fusion import ImageWithLabelNoFusionClassifier
