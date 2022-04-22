@@ -14,7 +14,7 @@ class ImageTransformerDistillationLabelTeacherClassifier(ImageTransformerWithLab
             x = x[-1]
 
         tokens = self.token_forward(x, label)
-        return self.extract_cls_token(tokens)
+        return self.extract_all_cls_tokens(tokens)
 
 
 class ImageTransformerDistillationLabelClassifier(ImageTransformerClassifier):
@@ -53,7 +53,7 @@ class ImageTransformerDistillationLabelClassifier(ImageTransformerClassifier):
             x = x[-1]
 
         tokens = self.token_forward(x, label.to(x.dtype))
-        cls_token = self.extract_cls_token(tokens)
+        cls_token = self.extract_all_cls_tokens(tokens)
         distillation_cls_token = self.teacher_classifier.distillation_forward(img, label.to(x.dtype))
 
         losses = dict()

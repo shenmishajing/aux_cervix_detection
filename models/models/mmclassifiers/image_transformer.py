@@ -177,8 +177,12 @@ class ImageTransformerClassifier(ImageClassifier):
         return [self.img_fcs[i](token) for i, token in enumerate(img_token)]
 
     @staticmethod
-    def extract_cls_token(tokens):
+    def extract_all_cls_tokens(tokens):
         return [torch.cat([t[:, 0] for t in token], dim = -1) for token in tokens]
+
+    @staticmethod
+    def extract_cls_token(token):
+        return torch.cat([t[:, 0] for t in token], dim = -1)
 
     def token_forward(self, x, label = None):
         return self.fusion_transformer(self.fusion_transformer.embed_forward(self.extract_img_token(x)))
@@ -204,7 +208,7 @@ class ImageTransformerClassifier(ImageClassifier):
             x = x[-1]
 
         tokens = self.token_forward(x)
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         return self.head.forward_train(cls_token, gt_label, **kwargs)
 
@@ -214,6 +218,6 @@ class ImageTransformerClassifier(ImageClassifier):
         if isinstance(x, tuple):
             x = x[-1]
         tokens = self.token_forward(x)
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         return self.head.simple_test(cls_token, **kwargs)

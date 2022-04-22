@@ -93,7 +93,7 @@ class ImageTransformerLearnLabelClassifier(ImageTransformerWithLabelClassifier):
         pred_label, label_feat = self.label_forward(label_x)
 
         tokens = self.token_forward(x, label_feat)
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         loss_label = []
         for i in range(len(self.label_configs)):
@@ -116,6 +116,6 @@ class ImageTransformerLearnLabelClassifier(ImageTransformerWithLabelClassifier):
         _, label_feat = self.label_forward(label_x)
 
         tokens = self.token_forward(x, label_feat)
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         return self.head.simple_test(cls_token, **kwargs)

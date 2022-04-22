@@ -25,8 +25,12 @@ class LabelTransformerClassifier(BaseClassifier):
         self.label_fcs = nn.ModuleList([nn.Linear(1, self.embed_dims) for _ in range(num_labels)])
 
     @staticmethod
-    def extract_cls_token(tokens):
+    def extract_all_cls_tokens(tokens):
         return [torch.cat([t[:, 0] for t in token], dim = -1) for token in tokens]
+
+    @staticmethod
+    def extract_cls_token(token):
+        return torch.cat([t[:, 0] for t in token], dim = -1)
 
     def extract_label_token(self, label):
         label_token = []
@@ -60,7 +64,7 @@ class LabelTransformerClassifier(BaseClassifier):
         """
 
         tokens = self.token_forward(label = label.to(torch.float32))
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         losses = dict()
         loss = self.head.forward_train(cls_token, gt_label)
@@ -73,7 +77,7 @@ class LabelTransformerClassifier(BaseClassifier):
         """Test without augmentation."""
 
         tokens = self.token_forward(label = label.to(torch.float32))
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         res = self.head.simple_test(cls_token, **kwargs)
 

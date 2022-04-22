@@ -55,7 +55,7 @@ class ImageTransformerWithLabelClassifier(ImageTransformerClassifier):
             x = x[-1]
 
         tokens = self.token_forward(x, label.to(x.dtype))
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         return self.head.forward_train(cls_token, gt_label, **kwargs)
 
@@ -65,6 +65,6 @@ class ImageTransformerWithLabelClassifier(ImageTransformerClassifier):
         if isinstance(x, tuple):
             x = x[-1]
         tokens = self.token_forward(x, label.to(x.dtype))
-        cls_token = self.extract_cls_token(tokens)[-1]
+        cls_token = self.extract_cls_token(tokens[-1])
 
         return self.head.simple_test(cls_token, **kwargs)
