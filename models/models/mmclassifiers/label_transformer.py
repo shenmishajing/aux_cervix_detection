@@ -44,7 +44,7 @@ class LabelTransformerClassifier(BaseClassifier):
         return label_token
 
     def token_forward(self, x = None, label = None):
-        return self.fusion_transformer(self.extract_label_token(label))
+        return self.fusion_transformer(self.fusion_transformer.embed_forward(self.extract_label_token(label)))
 
     def forward_train(self, *args, label, gt_label, **kwargs):
         """Forward computation during training.

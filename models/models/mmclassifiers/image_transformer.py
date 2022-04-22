@@ -117,11 +117,11 @@ class FusionTransformer(BaseModule):
         self.num_layers = self.transformers[0].num_layers
         self.with_cls_token = self.transformers[0].with_cls_token
 
+    def embed_forward(self, feats):
+        return [transformer.embed_forward(feat) for feat, transformer in zip(feats, self.transformers)]
+
     def forward(self, feats):
         assert len(feats) == self.num_transformer, 'FusionTransformer only accept same transformer number'
-
-        feats = [transformer.embed_forward(feat) for feat, transformer in zip(feats, self.transformers)]
-
         out_feats = []
         for stage in range(self.num_layers):
             feats = [transformer(feat, stage = stage) for feat, transformer in zip(feats, self.transformers)]
@@ -181,7 +181,7 @@ class ImageTransformerClassifier(ImageClassifier):
         return [torch.cat([t[:, 0] for t in token], dim = -1) for token in tokens]
 
     def token_forward(self, x, label = None):
-        return self.fusion_transformer(self.extract_img_token(x))
+        return self.fusion_transformer(self.fusion_transformer.embed_forward(self.extract_img_token(x)))
 
     def forward_train(self, img, gt_label, **kwargs):
         """Forward computation during training.

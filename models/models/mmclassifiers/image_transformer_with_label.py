@@ -32,7 +32,7 @@ class ImageTransformerWithLabelClassifier(ImageTransformerClassifier):
         img_tokens = self.extract_img_token(x)
         label_tokens = self.extract_label_token(label)
         tokens = [torch.cat([label_token, img_token], dim = 1) for img_token, label_token in zip(img_tokens, label_tokens)]
-        return self.fusion_transformer(tokens)
+        return self.fusion_transformer(self.fusion_transformer.embed_forward(tokens))
 
     def forward_train(self, img, label, gt_label, **kwargs):
         """Forward computation during training.
