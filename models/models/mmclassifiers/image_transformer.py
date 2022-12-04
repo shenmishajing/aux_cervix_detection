@@ -105,13 +105,16 @@ class TransformerLayers(VisionTransformer):
 
 
 class FusionTransformer(BaseModule):
-    def __init__(self, transformer_cfg, num_transformer, out_indices = None, *args, **kwargs):
+    def __init__(self, transformer_cfg, num_transformer, fusion_rate = None, out_indices = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         assert num_transformer > 0, 'FusionTransformer except more than zero transformer'
 
         self.num_transformer = num_transformer
         self.transformer_cfg = transformer_cfg
+        if num_transformer != 2:
+            assert fusion_rate is None, 'fusion_rate only support when there are two transformers'
+        self.fusion_rate = fusion_rate
         self.out_indices = out_indices
         self.transformers = nn.ModuleList([TransformerLayers(**transformer_cfg) for _ in range(num_transformer)])
         self.num_layers = self.transformers[0].num_layers
@@ -129,8 +132,14 @@ class FusionTransformer(BaseModule):
             if self.out_indices is None or stage in self.out_indices:
                 out_feats.append(feats)
 
-            fusion_token = torch.mean(torch.stack([f[:, -1] for f in feats], dim = 1), dim = 1, keepdim = True)
-            feats = [torch.cat([f[:, :-1], fusion_token], dim = 1) for f in feats]
+            if self.fusion_rate is None:
+                fusion_token = torch.mean(torch.stack([f[:, -1] for f in feats], dim = 1), dim = 1, keepdim = True)
+                fusion_token = [fusion_token for _ in feats]
+            else:
+                token_to_fusion = [f[:, -1, None] for f in feats]
+                fusion_token = [self.fusion_rate * token_to_fusion[0] + (1 - self.fusion_rate) * token_to_fusion[1],
+                                self.fusion_rate * token_to_fusion[1] + (1 - self.fusion_rate) * token_to_fusion[0]]
+            feats = [torch.cat([f[:, :-1], ff], dim = 1) for f, ff in zip(feats, fusion_token)]
 
         return out_feats
 
