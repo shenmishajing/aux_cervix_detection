@@ -60,10 +60,9 @@ trainer:
     weights_save_path: work_dirs
     # gpus
     num_nodes: 1
-    num_processes: 1
-    gpus: -1
+    accelerator: auto
+    devices: auto
     strategy: ddp_find_unused_parameters_false
-    sync_batchnorm: false
     # speed up
     precision: 32
     auto_lr_find: false
