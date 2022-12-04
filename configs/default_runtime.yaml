@@ -73,7 +73,6 @@ trainer:
     # val and log
     check_val_every_n_epoch: 1
     val_check_interval: 1.0
-    flush_logs_every_n_steps: null
     log_every_n_steps: 50
     track_grad_norm: -1
 
