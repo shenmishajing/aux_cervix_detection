@@ -9,7 +9,7 @@ from jsonargparse import Path, get_config_read_mode, set_loader
 from jsonargparse.actions import Action, FilesCompleterMethod, _ActionSubCommands
 from jsonargparse.loaders_dumpers import regex_curly_comma
 from jsonargparse.util import change_to_path_dir
-from pytorch_lightning.utilities.cli import LightningArgumentParser
+from pytorch_lightning.cli import LightningArgumentParser
 
 
 class DefaultLoader(yaml.FullLoader):

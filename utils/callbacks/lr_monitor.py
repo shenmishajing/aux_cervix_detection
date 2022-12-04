@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any, DefaultDict, List, Optional, Tuple, Type
 
+from pytorch_lightning.utilities.types import LRSchedulerConfig
 from torch.optim.optimizer import Optimizer
 
 from pytorch_lightning.callbacks import LearningRateMonitor as _LearningRateMonitor
@@ -13,37 +14,37 @@ class LearningRateMonitor(_LearningRateMonitor):
         self.name_prefix = name_prefix
 
     def _find_names_from_schedulers(
-            self, lr_schedulers: List, add_lr_sch_names: bool = True
+        self,
+        lr_scheduler_configs: List[LRSchedulerConfig],
     ) -> Tuple[List[List[str]], List[Optimizer], DefaultDict[Type[Optimizer], int]]:
         # Create unique names in the case we have multiple of the same learning
         # rate scheduler + multiple parameter groups
         names = []
         seen_optimizers: List[Optimizer] = []
         seen_optimizer_types: DefaultDict[Type[Optimizer], int] = defaultdict(int)
-        for scheduler in lr_schedulers:
-            if scheduler['scheduler'].optimizer in seen_optimizers:
-                updated_names = names[seen_optimizers.index(scheduler['scheduler'].optimizer)]
+        for config in lr_scheduler_configs:
+            sch = config.scheduler
+            if sch.optimizer in seen_optimizers:
+                updated_names = names[seen_optimizers.index(sch.optimizer)]
             else:
-                sch = scheduler["scheduler"]
                 name = self.name_prefix if self.name_prefix is not None else ''
-                if scheduler["name"] is not None:
-                    name += scheduler["name"]
+                if config.name is not None:
+                    name += config.name
                 else:
                     name += "lr-" + sch.optimizer.__class__.__name__
 
                 updated_names = self._check_duplicates_and_update_name(
-                    sch.optimizer, name, seen_optimizers, seen_optimizer_types, scheduler, add_lr_sch_names
+                    sch.optimizer, name, seen_optimizers, seen_optimizer_types, config
                 )
             names.append(updated_names)
 
         return names, seen_optimizers, seen_optimizer_types
 
     def _find_names_from_optimizers(
-            self,
-            optimizers: List[Any],
-            seen_optimizers: List[Optimizer],
-            seen_optimizer_types: DefaultDict[Type[Optimizer], int],
-            add_lr_sch_names: bool = True,
+        self,
+        optimizers: List[Any],
+        seen_optimizers: List[Optimizer],
+        seen_optimizer_types: DefaultDict[Type[Optimizer], int],
     ) -> Tuple[List[List[str]], List[Optimizer]]:
         names = []
         optimizers_without_scheduler = []
@@ -56,7 +57,7 @@ class LearningRateMonitor(_LearningRateMonitor):
 
             name = (self.name_prefix if self.name_prefix is not None else '') + "lr-" + optimizer.__class__.__name__
             updated_names = self._check_duplicates_and_update_name(
-                optimizer, name, seen_optimizers, seen_optimizer_types, None, add_lr_sch_names
+                optimizer, name, seen_optimizers, seen_optimizer_types, None
             )
             names.append(updated_names)
             optimizers_without_scheduler.append(optimizer)

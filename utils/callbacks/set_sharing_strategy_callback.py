@@ -15,7 +15,7 @@ class SetSharingStrategyCallback(Callback):
             strategy = 'file_system'
         self.strategy = strategy
 
-    def on_before_accelerator_backend_setup(self, trainer: Trainer, pl_module: LightningModule, stage: Optional[str] = None) -> None:
+    def setup(self, trainer: Trainer, pl_module: LightningModule, stage: Optional[str] = None) -> None:
         all_strategies = get_all_sharing_strategies()
         if self.strategy in all_strategies:
             set_sharing_strategy(self.strategy)

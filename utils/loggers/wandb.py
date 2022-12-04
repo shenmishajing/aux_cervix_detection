@@ -1,9 +1,10 @@
 import os
 from typing import Dict, Optional
 
-from pytorch_lightning.loggers.base import rank_zero_experiment
+from pytorch_lightning.loggers.logger import rank_zero_experiment
 from pytorch_lightning.loggers.wandb import Run, WandbLogger, wandb
 from pytorch_lightning.utilities import rank_zero_only, rank_zero_warn
+from pytorch_lightning.utilities.logger import _add_prefix
 
 
 class WandbNamedLogger(WandbLogger):
@@ -55,7 +56,7 @@ class WandbNamedLogger(WandbLogger):
     def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None) -> None:
         assert rank_zero_only.rank == 0, "experiment tried to log from global_rank != 0"
 
-        metrics = self._add_prefix(metrics)
+        metrics = _add_prefix(metrics, self._prefix, self.LOGGER_JOIN_CHAR)
         if step is not None:
             self.experiment.log({**metrics, "global_step": step})
         else:

@@ -1,7 +1,11 @@
+import os.path
+import time
 from types import MethodType
 from typing import Any, Callable, Dict, Optional, Type, Union
 
-from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY, LightningArgumentParser, LightningCLI, SaveConfigCallback
+from jsonargparse import ActionConfigFile
+import pytorch_lightning as pl
+from pytorch_lightning.cli import LightningArgumentParser, LightningCLI, SaveConfigCallback
 
 from utils.callbacks.save_and_log_config_callback import SaveAndLogConfigCallback
 from utils.optim import get_configure_optimizers_method
@@ -18,9 +22,23 @@ class CLI(LightningCLI):
     ) -> None:
         super().__init__(save_config_callback = save_config_callback, trainer_class = trainer_class, *args, **kwargs)
 
-    def init_parser(self, **kwargs: Any) -> LightningArgumentParser:
+    def before_instantiate_classes(self) -> None:
+        """Implement to run some code before instantiating the classes."""
+        config = self.config[self.config['subcommand']]
+        if 'trainer' in config and 'logger' in config['trainer'] and \
+                'class_path' in config['trainer']['logger'] and \
+                'Wandb' in config['trainer']['logger']['class_path']:
+            config['trainer']['logger']['init_args']['name'] = os.path.splitext(os.path.split(config['config'][0].abs_path)[1])[0]
+            config['trainer']['logger']['init_args']['id'] = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
+
+    def init_parser(self, **kwargs: Any) -> ArgumentParser:
         """Method that instantiates the argument parser."""
-        return ArgumentParser(**kwargs)
+        kwargs.setdefault("dump_header", [f"pytorch_lightning=={pl.__version__}"])
+        parser = ArgumentParser(**kwargs)
+        parser.add_argument(
+            "-c", "--config", action = ActionConfigFile, help = "Path to a configuration file in json or yaml format."
+        )
+        return parser
 
     def add_default_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         super().add_default_arguments_to_parser(parser)
@@ -32,10 +50,17 @@ class CLI(LightningCLI):
         )
 
     def add_core_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
-        super().add_core_arguments_to_parser(parser)
-        if self.datamodule_class is None and not len(DATAMODULE_REGISTRY):
-            # this should not be required because the user might want to use the `LightningModule` dataloaders
-            parser.add_lightning_class_args(self._datamodule_class, "data", subclass_mode = self.subclass_mode_data, required = False)
+        """Adds arguments from the core classes to the parser."""
+        parser.add_lightning_class_args(self.trainer_class, "trainer")
+        trainer_defaults = {"trainer." + k: v for k, v in self.trainer_defaults.items() if k != "callbacks"}
+        parser.set_defaults(trainer_defaults)
+
+        parser.add_lightning_class_args(self._model_class, "model", subclass_mode = self.subclass_mode_model)
+
+        # this should not be required because the user might want to use the `LightningModule` dataloaders
+        parser.add_lightning_class_args(
+            self._datamodule_class, "data", subclass_mode = self.subclass_mode_data, required = False
+        )
 
     def _add_configure_optimizers_method_to_model(self, subcommand: Optional[str]) -> None:
         super()._add_configure_optimizers_method_to_model(subcommand)
