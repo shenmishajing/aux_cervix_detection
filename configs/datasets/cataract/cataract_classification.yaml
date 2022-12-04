@@ -54,6 +54,7 @@ trainer:
         change_item:
             -   - 0
                 -   init_args:
-                        monitor: val/Accuracy
-                        filename: 'epoch:{epoch}-val_acc:{val/Accuracy:.4g}'
+                        monitor: acc
+                        filename: '{epoch}-{acc:.4g}'
                         mode: max
+                        auto_insert_metric_name: true
