@@ -89,7 +89,7 @@ class MMDetModelAdapter(LightningModule, ABC):
                     metric_logs = {str(metric).removesuffix('()'): metric_logs}
 
             for k, v in metric_logs.items():
-                self.log(f'{prefix}/{k}', v)
+                self.log(f'{prefix}/{k}', v, sync_dist = True)
 
             if 'prog_bar' in metric_log_info:
                 if not isinstance(metric_log_info['prog_bar'], list):
@@ -106,7 +106,7 @@ class MMDetModelAdapter(LightningModule, ABC):
                             key = item[0]
                             value = metric_logs[key]
                     if key is not None:
-                        self.log(key, value, logger = False, prog_bar = True)
+                        self.log(key, value, logger = False, prog_bar = True, sync_dist = True)
             metric.reset()
 
     @staticmethod
@@ -147,7 +147,7 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def validation_step(self, batch, *args, **kwargs):
         outputs = self.forward_step(batch)
-        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'val/'))
+        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'val/'), sync_dist = True)
         return outputs
 
     def validation_epoch_end(self, outs):
@@ -155,7 +155,7 @@ class MMDetModelAdapter(LightningModule, ABC):
 
     def test_step(self, batch, *args, **kwargs):
         outputs = self.forward_step(batch)
-        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'test/'))
+        self.log_dict(self.add_prefix(outputs['log_vars'], prefix = 'test/'), sync_dist = True)
         return outputs
 
     def test_epoch_end(self, outs):

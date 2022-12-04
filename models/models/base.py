@@ -75,11 +75,11 @@ class LightningModule(_LightningModule, BaseModule, ABC):
     def validation_step(self, batch, *args, **kwargs):
         res = self(batch)
         loss = self.loss_step(batch, res, 'val')
-        self.log_dict(loss)
+        self.log_dict(loss, sync_dist = True)
         return loss
 
     def test_step(self, batch, *args, **kwargs):
         res = self(batch)
         loss = self.loss_step(batch, res, 'test')
-        self.log_dict(loss)
+        self.log_dict(loss, sync_dist = True)
         return loss
