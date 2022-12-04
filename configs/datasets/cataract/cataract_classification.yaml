@@ -52,7 +52,7 @@ data:
 trainer:
     callbacks:
         change_item:
-            -   - -1
+            -   - 0
                 -   init_args:
                         monitor: val/Accuracy
                         filename: 'epoch:{epoch}-val_acc:{val/Accuracy:.4g}'

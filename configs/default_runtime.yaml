@@ -5,6 +5,15 @@ trainer:
             project: default_project_name
             offline: false
     callbacks:
+        -   class_path: utils.callbacks.model_checkpoint.ModelCheckpointWithLinkBest
+            init_args:
+                monitor: val/loss
+                filename: 'epoch:{epoch}-val_loss:{val/loss:.4g}'
+                save_top_k: 3
+                save_last: true
+                save_best: true
+                mode: min
+                auto_insert_metric_name: false
         -   class_path: utils.progress.rich_progress.RichDefaultThemeProgressBar
             init_args:
                 show_version: false
@@ -29,15 +38,6 @@ trainer:
                 logging_interval: null
                 log_momentum: false
                 name_prefix: null
-        -   class_path: utils.callbacks.model_checkpoint.ModelCheckpointWithLinkBest
-            init_args:
-                monitor: val/loss
-                filename: 'epoch:{epoch}-val_loss:{val/loss:.4g}'
-                save_top_k: 3
-                save_last: true
-                save_best: true
-                mode: min
-                auto_insert_metric_name: false
     # debug
     limit_train_batches: 1.0
     limit_val_batches: 1.0

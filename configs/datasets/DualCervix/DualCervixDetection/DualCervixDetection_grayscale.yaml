@@ -3,7 +3,7 @@ __base__: ../DualCervix_grayscale.yaml
 trainer:
     callbacks:
         change_item:
-            -   - -1
+            -   - 0
                 -   init_args:
                         monitor: val/map_50
                         filename: 'epoch:{epoch}-val_map_50:{val/map_50:.4g}'
