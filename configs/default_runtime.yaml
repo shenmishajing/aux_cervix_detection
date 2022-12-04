@@ -57,7 +57,7 @@ trainer:
     gradient_clip_val: null
     gradient_clip_algorithm: null
     # path
-    weights_save_path: work_dirs
+    default_root_dir: work_dirs
     # gpus
     num_nodes: 1
     accelerator: auto
