@@ -3,6 +3,7 @@ trainer:
         class_path: utils.loggers.wandb.WandbNamedLogger
         init_args:
             project: default_project_name
+            save_dir: work_dirs
             offline: false
     callbacks:
         -   class_path: utils.callbacks.model_checkpoint.ModelCheckpointWithLinkBest
@@ -56,8 +57,6 @@ trainer:
     # gradient clip
     gradient_clip_val: null
     gradient_clip_algorithm: null
-    # path
-    default_root_dir: work_dirs
     # gpus
     num_nodes: 1
     accelerator: auto
