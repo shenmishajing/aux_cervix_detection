@@ -59,7 +59,7 @@ class CLI(LightningCLI):
         config = self.config['config'] if 'subcommand' not in self.config else self.config[self.config['subcommand']]
         exp_name = os.path.splitext(os.path.split(config['config'][0].abs_path)[1])[0]
         exp_id = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
-        value_dict = {'name': exp_name, 'id': exp_id}
+        value_dict = {'name': exp_name, 'version': exp_id}
         if config.get('trainer') is not None and config['trainer'].get('logger') is not None:
             if config['trainer']['logger'].get('init_args') is None:
                 config['trainer']['logger']['init_args'] = value_dict
