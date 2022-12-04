@@ -22,15 +22,6 @@ class CLI(LightningCLI):
     ) -> None:
         super().__init__(save_config_callback = save_config_callback, trainer_class = trainer_class, *args, **kwargs)
 
-    def before_instantiate_classes(self) -> None:
-        """Implement to run some code before instantiating the classes."""
-        config = self.config[self.config['subcommand']]
-        if 'trainer' in config and 'logger' in config['trainer'] and \
-                'class_path' in config['trainer']['logger'] and \
-                'Wandb' in config['trainer']['logger']['class_path']:
-            config['trainer']['logger']['init_args']['name'] = os.path.splitext(os.path.split(config['config'][0].abs_path)[1])[0]
-            config['trainer']['logger']['init_args']['id'] = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
-
     def init_parser(self, **kwargs: Any) -> ArgumentParser:
         """Method that instantiates the argument parser."""
         kwargs.setdefault("dump_header", [f"pytorch_lightning=={pl.__version__}"])
@@ -61,6 +52,21 @@ class CLI(LightningCLI):
         parser.add_lightning_class_args(
             self._datamodule_class, "data", subclass_mode = self.subclass_mode_data, required = False
         )
+
+    def before_instantiate_classes(self) -> None:
+        """Implement to run some code before instantiating the classes."""
+        super().before_instantiate_classes()
+        config = self.config['config'] if 'subcommand' not in self.config else self.config[self.config['subcommand']]
+        exp_name = os.path.splitext(os.path.split(config['config'][0].abs_path)[1])[0]
+        exp_id = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
+        value_dict = {'name': exp_name, 'id': exp_id}
+        if config.get('trainer') is not None and config['trainer'].get('logger') is not None:
+            if config['trainer']['logger'].get('init_args') is None:
+                config['trainer']['logger']['init_args'] = value_dict
+            else:
+                for k, v in value_dict.items():
+                    if config['trainer']['logger']['init_args'].get(k) is None:
+                        config['trainer']['logger']['init_args'][k] = v
 
     def _add_configure_optimizers_method_to_model(self, subcommand: Optional[str]) -> None:
         super()._add_configure_optimizers_method_to_model(subcommand)
