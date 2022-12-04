@@ -52,7 +52,7 @@ data:
 trainer:
     callbacks:
         change_item:
-            -   - 0
+            -   - -1
                 -   init_args:
                         monitor: acc
                         filename: '{epoch}-{acc:.4g}'
