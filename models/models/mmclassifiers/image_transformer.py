@@ -134,12 +134,10 @@ class FusionTransformer(BaseModule):
 
             if self.fusion_rate is None:
                 fusion_token = torch.mean(torch.stack([f[:, -1] for f in feats], dim = 1), dim = 1, keepdim = True)
-                fusion_token = [fusion_token for _ in feats]
             else:
-                token_to_fusion = [f[:, -1, None] for f in feats]
-                fusion_token = [self.fusion_rate * token_to_fusion[0] + (1 - self.fusion_rate) * token_to_fusion[1],
-                                self.fusion_rate * token_to_fusion[1] + (1 - self.fusion_rate) * token_to_fusion[0]]
-            feats = [torch.cat([f[:, :-1], ff], dim = 1) for f, ff in zip(feats, fusion_token)]
+                fusion_token = [f[:, -1, None] for f in feats]
+                fusion_token = self.fusion_rate * fusion_token[0] + (1 - self.fusion_rate) * fusion_token[1]
+            feats = [torch.cat([f[:, :-1], fusion_token], dim = 1) for f in feats]
 
         return out_feats
 
