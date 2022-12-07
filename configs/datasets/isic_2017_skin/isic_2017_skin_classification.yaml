@@ -1,0 +1,55 @@
+data:
+    class_path: datasets.MMDetDataSetAdapter
+    init_args:
+        dataset_cfg:
+            type: ISIC2017SkinDataSet
+            pipeline:
+                -   type: LoadImageFromFile
+                    color_type: color
+                -   type: Resize
+                    size: !!python/tuple [ 224, 224 ]
+                -   type: RandomFlip
+                    flip_prob: 0.5
+                -   type: Normalize
+                    mean: [ 74.70364379882812, 77.83037567138672, 79.49059295654297 ]
+                    std: [ 40.09847640991211, 36.859676361083984, 37.57963180541992 ]
+                    to_rgb: true
+                -   type: GenRotateImage
+                -   type: ImageToTensor
+                    keys: [ img ]
+                -   type: ToTensor
+                    keys:
+                        - img_rotate
+                        - label
+                        - gt_label
+                -   type: Collect
+                    keys:
+                        - img
+                        - img_rotate
+                        - label
+                        - gt_label
+            data_prefix: data/ISIC_2017/ISIC-2017_${split}_Data
+            ann_file: data/ISIC_2017/ISIC-2017_${split}_Part3_GroundTruth.csv
+            is_melanoma: true
+        split_format_to:
+            - data_prefix
+            - ann_file
+        split_name_map:
+            train: Training
+            val: Validation
+            test: Validation
+            predict: Validation
+        data_loader_config:
+            batch_size: 32
+            num_workers: 8
+            prefetch_factor: 2
+            pin_memory: true
+
+trainer:
+    callbacks:
+        change_item:
+            -   - -1
+                -   init_args:
+                        monitor: val/Accuracy
+                        filename: 'epoch:{epoch}-val_acc:{val/Accuracy:.4g}'
+                        mode: max
