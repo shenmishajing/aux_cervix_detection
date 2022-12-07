@@ -38,7 +38,7 @@ data:
                         - gt_smooth_label
                         - gt_dimly_label
             data_prefix: data/cataract/ROI/crop_region_t
-            ann_file: data/cataract/${split}.csv
+            ann_file: data/cataract/output_stratified/${split}.csv
             label_indices: [ 0, 2, 3, 5 ]
         split_name_map:
             test: val
@@ -55,6 +55,5 @@ trainer:
             -   - -1
                 -   init_args:
                         monitor: acc
-                        filename: '{epoch}-{acc:.4g}'
+                        filename: 'epoch:{epoch}-acc:{acc:.4g}'
                         mode: max
-                        auto_insert_metric_name: true

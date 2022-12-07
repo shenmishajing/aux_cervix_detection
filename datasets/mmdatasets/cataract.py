@@ -7,7 +7,7 @@ from mmdet.datasets import DATASETS
 
 @DATASETS.register_module()
 class CataractDataSet(BaseDataset):
-    CLASSES = [str(i) for i in range(7)]
+    CLASSES = ['0'] + [str(i) for i in range(2, 7)]
 
     def __init__(self,
                  label_indices = None,
@@ -18,6 +18,8 @@ class CataractDataSet(BaseDataset):
     def load_annotations(self):
         data_infos = []
         for line in csv.reader(open(self.ann_file)):
+            if line[1] not in self.CLASSES:
+                continue
             info = {
                 'img_prefix': self.data_prefix,
                 'img_info': {'filename': line[0]},
