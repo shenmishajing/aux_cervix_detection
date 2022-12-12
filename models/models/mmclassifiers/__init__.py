@@ -8,6 +8,7 @@ from .image_distillation_label import (
 )
 from .image_learn_label import ImageLearnLabelClassifier
 from .image_rotate import RotateImageClassifier
+from .image_token import ImageTokenClassifier
 from .image_transformer import ImageTransformerClassifier
 from .image_transformer_distillation_label import (
     ImageTransformerDistillationLabelClassifier,
