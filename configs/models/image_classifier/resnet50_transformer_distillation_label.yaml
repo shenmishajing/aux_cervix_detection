@@ -12,8 +12,11 @@ model:
                     class_path: models.models.mmclassifiers.ImageTransformerDistillationLabelTeacherClassifier
                     init_args:
                         __base__:
-                            - [ resnet50_transformer_with_label.yaml, model.init_args.model.init_args ]
+                            - [
+                                  resnet50_transformer_with_label.yaml,
+                                  model.init_args.model.init_args,
+                              ]
                         init_cfg:
-                            checkpoint: work_dirs/resnet50_transformer_with_label_cataract/3it6hlsn/checkpoints/best.ckpt
+                            checkpoint: work_dirs/resnet50_transformer_with_label_cataract/20221212_160034/checkpoints/best.ckpt
                             type: Pretrained
                             prefix: model

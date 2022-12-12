@@ -8,6 +8,7 @@ model:
             init_args:
                 num_labels: 4
                 fusion_transformer_cfg:
+                    fusion_rate: 0.6
                     transformer_cfg:
                         num_patches: 6
                 head:
