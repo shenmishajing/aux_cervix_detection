@@ -5,6 +5,7 @@ model:
         model:
             class_path: models.models.mmclassifiers.ImageTransformerClassifier
             init_args:
+                __delete__: embed_dims
                 in_channels: 512
                 num_img_token: 4
                 head:

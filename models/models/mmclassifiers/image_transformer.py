@@ -183,23 +183,30 @@ class FusionTransformer(BaseModule):
 class ImageTransformerClassifier(ImageTokenClassifier):
     def __init__(
         self,
-        embed_dims=None,
+        center_size=1,
+        in_channels=512,
+        num_img_token=4,
         fusion_transformer_cfg=None,
         *args,
         **kwargs,
     ):
+        super(ImageTokenClassifier, self).__init__(*args, **kwargs)
+
+        self.center_size = center_size
+        self.in_channels = in_channels
+        self.num_img_token = num_img_token
+
         self.fusion_transformer_cfg = fusion_transformer_cfg
         self.fusion_transformer = FusionTransformer(**fusion_transformer_cfg)
+
+        self.embed_dims = self.fusion_transformer.transformers[0].embed_dims
         self.num_transformer = self.fusion_transformer.num_transformer
         assert self.num_transformer in [
             1,
             2,
         ], "ImageTransformerWithLabelClassifier only support one or two transformers"
-        super().__init__(
-            *args,
-            **kwargs,
-            embed_dims=self.fusion_transformer.transformers[0].embed_dims,
-        )
+
+        self.img_fcs = self.build_img_fcs()
 
     def build_img_fcs(self):
         return nn.ModuleList(
@@ -231,5 +238,5 @@ class ImageTransformerClassifier(ImageTokenClassifier):
 
     def token_forward(self, x, label=None):
         return self.fusion_transformer(
-            self.fusion_transformer.embed_forward(super().extract_img_token(x))
+            self.fusion_transformer.embed_forward(self.extract_img_token(x))
         )
