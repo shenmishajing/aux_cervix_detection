@@ -1,0 +1,6 @@
+__base__: resnet50_cataract.yaml
+
+data:
+    init_args:
+        dataset_cfg:
+            ann_file: data/cataract/output_stratified_with_match/${split}_random.csv
