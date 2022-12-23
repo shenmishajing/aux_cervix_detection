@@ -121,6 +121,7 @@ class FusionTransformer(BaseModule):
         transformer_cfg,
         num_transformer,
         fusion_rate=None,
+        start_fusion_layer=0,
         out_indices=None,
         *args,
         **kwargs,
@@ -138,6 +139,7 @@ class FusionTransformer(BaseModule):
                 fusion_rate is None
             ), "fusion_rate only support when there are two transformers"
         self.fusion_rate = fusion_rate
+        self.start_fusion_layer = start_fusion_layer
         self.out_indices = out_indices
         self.transformers = nn.ModuleList(
             [TransformerLayers(**transformer_cfg) for _ in range(num_transformer)]
@@ -165,17 +167,20 @@ class FusionTransformer(BaseModule):
             if self.out_indices is None or stage in self.out_indices:
                 out_feats.append(feats)
 
-            if self.fusion_rate is None:
-                fusion_token = torch.mean(
-                    torch.stack([f[:, -1] for f in feats], dim=1), dim=1, keepdim=True
-                )
-            else:
-                fusion_token = [f[:, -1, None] for f in feats]
-                fusion_token = (
-                    self.fusion_rate * fusion_token[0]
-                    + (1 - self.fusion_rate) * fusion_token[1]
-                )
-            feats = [torch.cat([f[:, :-1], fusion_token], dim=1) for f in feats]
+            if stage >= self.start_fusion_layer:
+                if self.fusion_rate is None:
+                    fusion_token = torch.mean(
+                        torch.stack([f[:, -1] for f in feats], dim=1),
+                        dim=1,
+                        keepdim=True,
+                    )
+                else:
+                    fusion_token = [f[:, -1, None] for f in feats]
+                    fusion_token = (
+                        self.fusion_rate * fusion_token[0]
+                        + (1 - self.fusion_rate) * fusion_token[1]
+                    )
+                feats = [torch.cat([f[:, :-1], fusion_token], dim=1) for f in feats]
 
         return out_feats
 

@@ -8,6 +8,8 @@ model:
                 head:
                     type: StackedLinearClsHead
                     mid_channels: [128]
+                fusion_transformer_cfg:
+                    start_fusion_layer: 0
                 teacher_classifier:
                     init_args:
                         init_cfg:
@@ -15,3 +17,5 @@ model:
                         head:
                             type: StackedLinearClsHead
                             mid_channels: [128]
+                        fusion_transformer_cfg:
+                            start_fusion_layer: 0
