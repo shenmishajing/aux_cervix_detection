@@ -1,0 +1,17 @@
+__base__:
+    - resnet50_transformer_distillation_label_cataract.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                head:
+                    type: StackedLinearClsHead
+                    mid_channels: [128]
+                teacher_classifier:
+                    init_args:
+                        init_cfg:
+                            checkpoint: work_dirs/resnet50_transformer_stack_head_with_label_cataract/20221223_164056/checkpoints/best.ckpt
+                        head:
+                            type: StackedLinearClsHead
+                            mid_channels: [128]

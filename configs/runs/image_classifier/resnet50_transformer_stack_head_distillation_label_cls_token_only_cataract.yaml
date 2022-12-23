@@ -1,0 +1,9 @@
+__base__:
+    - resnet50_transformer_stack_head_distillation_label_cataract.yaml
+
+model:
+    init_args:
+        model:
+            init_args:
+                distillation_loss:
+                    __delete__: label

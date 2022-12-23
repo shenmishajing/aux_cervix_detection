@@ -6,8 +6,12 @@ model:
             class_path: models.models.mmclassifiers.ImageTransformerDistillationLabelClassifier
             init_args:
                 distillation_loss:
-                    type: SmoothL1Loss
-                    loss_weight: 1.0
+                    cls_token:
+                        type: SmoothL1Loss
+                        loss_weight: 1.0
+                    label:
+                        type: SmoothL1Loss
+                        loss_weight: 1.0
                 teacher_classifier:
                     class_path: models.models.mmclassifiers.ImageTransformerDistillationLabelTeacherClassifier
                     init_args:
