@@ -10,7 +10,7 @@ model:
                     frozen_stages: 1
                     norm_eval: true
                     num_stages: 4
-                    out_indices: [ 3 ]
+                    out_indices: [3]
                     style: pytorch
                     norm_cfg:
                         requires_grad: true
@@ -24,8 +24,7 @@ model:
                     type: LinearClsHead
                     num_classes: 1000
                     in_channels: 2048
-                    topk: !!python/tuple [ 1, 5 ]
+                    topk: !!python/tuple [1, 5]
                     loss:
                         type: CrossEntropyLoss
                         loss_weight: 1.0
-                        use_sigmoid: false

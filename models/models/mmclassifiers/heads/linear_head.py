@@ -12,7 +12,7 @@ class LinearClsHead(_LinearClsHead):
     def forward_train(self, x, gt_label, **kwargs):
         x = self.pre_logits(x)
         cls_score = self.fc(x)
-        if self.compute_loss.use_sigmoid:
+        if hasattr(self.compute_loss, "use_sigmoid") and self.compute_loss.use_sigmoid:
             gt_label = kwargs["gt_smooth_label"]
         losses = self.loss(cls_score, gt_label)
         return losses
