@@ -6,8 +6,6 @@ model:
             init_args:
                 backbone:
                     type: ResNet
-                    depth: 18
+                    depth: 101
                     init_cfg:
-                        checkpoint: torchvision://resnet18
-                head:
-                    in_channels: 512
+                        checkpoint: torchvision://resnet101
