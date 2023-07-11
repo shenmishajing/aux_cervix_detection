@@ -27,6 +27,7 @@ class TransformerLayers(VisionTransformer):
         with_cls_token=True,
         layer_cfgs=dict(),
         init_cfg=None,
+        fusion_by_cross_attention=False,
     ):
         super(VisionTransformer, self).__init__(init_cfg)
 
@@ -66,6 +67,8 @@ class TransformerLayers(VisionTransformer):
         # stochastic depth decay rule
         dpr = np.linspace(0, drop_path_rate, self.num_layers)
 
+        self.fusion_by_cross_attention = fusion_by_cross_attention
+        self.cross_attention = ModuleList()
         self.layers = ModuleList()
         if isinstance(layer_cfgs, dict):
             layer_cfgs = [layer_cfgs] * self.num_layers
@@ -81,6 +84,17 @@ class TransformerLayers(VisionTransformer):
             )
             _layer_cfg.update(layer_cfgs[i])
             self.layers.append(TransformerEncoderLayer(**_layer_cfg))
+            if self.fusion_by_cross_attention:
+                self.cross_attention.append(
+                    nn.MultiheadAttention(
+                        embed_dim=self.embed_dims,
+                        num_heads=self.arch_settings["num_heads"],
+                        dropout=drop_rate,
+                        bias=qkv_bias,
+                        add_bias_kv=qkv_bias,
+                        batch_first=True,
+                    )
+                )
 
         self.final_norm = final_norm
         if final_norm:
@@ -120,6 +134,7 @@ class FusionTransformer(BaseModule):
         self,
         transformer_cfg,
         num_transformer,
+        fusion_by_cross_attention=False,
         fusion_rate=None,
         start_fusion_layer=0,
         out_indices=None,
@@ -133,7 +148,9 @@ class FusionTransformer(BaseModule):
         ), "FusionTransformer except more than zero transformer"
 
         self.num_transformer = num_transformer
+        self.fusion_by_cross_attention = fusion_by_cross_attention
         self.transformer_cfg = transformer_cfg
+        self.transformer_cfg["fusion_by_cross_attention"] = fusion_by_cross_attention
         if num_transformer != 2:
             assert (
                 fusion_rate is None
@@ -168,19 +185,29 @@ class FusionTransformer(BaseModule):
                 out_feats.append(feats)
 
             if stage >= self.start_fusion_layer:
-                if self.fusion_rate is None:
-                    fusion_token = torch.mean(
-                        torch.stack([f[:, -1] for f in feats], dim=1),
-                        dim=1,
-                        keepdim=True,
-                    )
+                if self.fusion_by_cross_attention:
+                    feats = [
+                        self.transformers[0].cross_attention[stage](
+                            feats[1], feats[0], feats[0]
+                        )[0],
+                        self.transformers[1].cross_attention[stage](
+                            feats[0], feats[1], feats[1]
+                        )[0],
+                    ]
                 else:
-                    fusion_token = [f[:, -1, None] for f in feats]
-                    fusion_token = (
-                        self.fusion_rate * fusion_token[0]
-                        + (1 - self.fusion_rate) * fusion_token[1]
-                    )
-                feats = [torch.cat([f[:, :-1], fusion_token], dim=1) for f in feats]
+                    if self.fusion_rate is None:
+                        fusion_token = torch.mean(
+                            torch.stack([f[:, -1] for f in feats], dim=1),
+                            dim=1,
+                            keepdim=True,
+                        )
+                    else:
+                        fusion_token = [f[:, -1, None] for f in feats]
+                        fusion_token = (
+                            self.fusion_rate * fusion_token[0]
+                            + (1 - self.fusion_rate) * fusion_token[1]
+                        )
+                    feats = [torch.cat([f[:, :-1], fusion_token], dim=1) for f in feats]
 
         return out_feats
 
