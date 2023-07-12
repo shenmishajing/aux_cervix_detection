@@ -1,5 +1,5 @@
-from mmcls.models.builder import BACKBONES
 import torch.nn as nn
+from mmcls.models.builder import BACKBONES
 
 
 def default_unet_features():
@@ -24,6 +24,7 @@ class ConvBlock(nn.Module):
         out = self.pool(out)
         return out
 
+
 @BACKBONES.register_module()
 class CataractNet(nn.Module):
     """
@@ -40,8 +41,10 @@ class CataractNet(nn.Module):
     def __init__(
         self,
         in_channels=3,
+        out_indices=None,
     ):
         super().__init__()
+        self.out_indices = out_indices
 
         self.layers = nn.ModuleList()
 
@@ -51,7 +54,13 @@ class CataractNet(nn.Module):
 
     def forward(self, x):
 
-        for layer in self.layers:
+        outs = []
+        for i, layer in enumerate(self.layers):
             x = layer(x)
+            if self.out_indices is not None and i in self.out_indices:
+                outs.append(x)
 
-        return x.flatten(1)
+        if self.out_indices is not None:
+            return outs
+        else:
+            return x.flatten(1)
