@@ -48,7 +48,11 @@ class ImageTokenClassifier(ImageClassifier):
         img_token = self.extract_center_round_feat(x)
         return [
             torch.cat(
-                [self.img_fcs[i](token) for i, token in enumerate(img_token)], dim=1
+                [
+                    self.img_fcs[i](token.squeeze(1))
+                    for i, token in enumerate(img_token)
+                ],
+                dim=1,
             )
         ]
 
