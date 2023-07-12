@@ -25,7 +25,9 @@ class ImageTokenClassifier(ImageClassifier):
         self.img_fcs = self.build_img_fcs()
 
     def build_img_fcs(self):
-        return nn.ModuleList([nn.Linear(self.in_channels, self.embed_dims) for _ in range(2)])
+        return nn.ModuleList(
+            [nn.Linear(self.in_channels, self.embed_dims) for _ in range(2)]
+        )
 
     def extract_center_round_feat(self, x):
         x = x.view(x.shape[0], self.num_img_token, -1, *x.shape[2:])
@@ -46,7 +48,7 @@ class ImageTokenClassifier(ImageClassifier):
         img_token = self.extract_center_round_feat(x)
         return [
             torch.cat(
-                [self.img_fcs[i](token.squeeze()) for i, token in enumerate(img_token)], dim=1
+                [self.img_fcs[i](token) for i, token in enumerate(img_token)], dim=1
             )
         ]
 
