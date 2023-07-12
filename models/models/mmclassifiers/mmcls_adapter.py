@@ -5,7 +5,15 @@ from abc import ABC
 import mmcv
 import torch
 from torch import nn
-from torchmetrics import Accuracy, F1Score, Precision, Recall, Specificity
+from torchmetrics import (
+    Accuracy,
+    CohenKappa,
+    F1Score,
+    MatthewsCorrCoef,
+    Precision,
+    Recall,
+    Specificity,
+)
 
 from ..mmdetectors import MMDetModelAdapter
 
@@ -14,11 +22,13 @@ class MMClsModelAdapter(MMDetModelAdapter, ABC):
     def get_default_metrics(self):
         metrics = nn.ModuleList(
             [
-                Accuracy("binary"),
-                Precision("binary"),
-                Recall("binary"),
-                F1Score("binary"),
-                Specificity("binary"),
+                Accuracy("multiclass", num_classes=7),
+                Precision("multiclass", average="macro", num_classes=7),
+                Recall("multiclass", average="macro", num_classes=7),
+                F1Score("multiclass", average="macro", num_classes=7),
+                Specificity("multiclass", average="macro", num_classes=7),
+                CohenKappa("multiclass", num_classes=7),
+                MatthewsCorrCoef("multiclass", num_classes=7),
             ]
         )
         metrics_log_info = [{"prog_bar": ["acc"]}]
