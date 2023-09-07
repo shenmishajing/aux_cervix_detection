@@ -249,7 +249,7 @@ class MMDetModelAdapter(LightningModule, ABC):
 
         imgs = img.permute(0, 2, 3, 1).cpu().numpy()
         for i in range(len(img_metas)):
-            for xx, layer_num in zip(x, sorted(self.model.backbone.out_indices)):
+            for layer_num, xx in enumerate(x):
                 mmcv.imwrite(
                     cv2.applyColorMap(xx[i], cv2.COLORMAP_JET),
                     os.path.join(
