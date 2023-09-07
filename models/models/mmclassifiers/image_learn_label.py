@@ -64,7 +64,7 @@ class ImageLearnLabelClassifier(ImageClassifier):
         else:
             label_feat = torch.cat(pred_label, dim = 1)
         label_feat = self.label_fc(label_feat)
-        img_feat = self.global_pool(x).squeeze()
+        img_feat = self.global_pool(x).flatten(1)
         img_feat = self.img_fc(img_feat)
         x = torch.cat((img_feat, label_feat), dim = 1)
         return x, pred_label
